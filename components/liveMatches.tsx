@@ -54,7 +54,6 @@ export default function LiveMatches() {
     fetchLiveMatches();
   }, []);
 
-  console.log(matches.length && "oi");
   return (
     <>
       {loading && (
