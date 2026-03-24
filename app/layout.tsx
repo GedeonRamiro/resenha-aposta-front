@@ -3,6 +3,7 @@ import { Montserrat, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -41,6 +42,7 @@ export default function RootLayout({
             </main>
           </div>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );
