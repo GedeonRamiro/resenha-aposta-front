@@ -1,64 +1,57 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import { useSidebarStore } from "@/components/sidebar-store";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { useBackendUser } from "@/lib/useBackendUser";
+import { cn } from "@/lib/utils";
 import {
   Sidebar as SidebarRoot,
   SidebarHeader,
   SidebarContent,
   SidebarGroup,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  FiMenu,
   FiX,
   FiHome,
   FiTable,
+  FiUser,
   FiUsers,
   FiBookOpen,
   FiBarChart2,
-  FiShield,
 } from "react-icons/fi";
 import { FaRegFutbol } from "react-icons/fa6";
 
 const menuItems = [
   { label: "Início", href: "/", icon: <FiHome /> },
-  { label: "Jogos", href: "/jogos", icon: <FaRegFutbol />, admin: true },
-  { label: "Apostas", href: "/apostas", icon: <FiBarChart2 />, admin: true },
-  { label: "Apostadores", href: "/apostadores", icon: <FiUsers /> },
+  { label: "Jogos", href: "/games", icon: <FaRegFutbol />, admin: true },
+  { label: "Apostas", href: "/bets", icon: <FiBarChart2 />, admin: true },
+  {
+    label: "Minhas Apostas",
+    href: "/users/me",
+    icon: <FiUser />,
+    requiresAuth: true,
+  },
+  { label: "Apostadores", href: "/users", icon: <FiUsers /> },
   { label: "Blog", href: "/blog", icon: <FiBookOpen />, admin: true },
-  { label: "Ranking", href: "/ranking", icon: <FiTable /> },
+  { label: "Ranking", href: "/user-scores", icon: <FiTable /> },
 ];
-
-// Simulação de autenticação e role (substitua por contexto real depois)
-const mockUser = {
-  name: "Usuário",
-  logged: true,
-  isAdmin: true,
-};
 
 export function Sidebar() {
   const { open, closeSidebar } = useSidebarStore();
-  const [user, setUser] = useState(mockUser);
+  const { isAuthenticated } = useBackendUser();
   const pathname = usePathname();
 
   return (
     <>
       <SidebarRoot
-        className={`transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:fixed md:block`}
+        className={`border-primary/20 bg-linear-to-b from-primary/14 via-background to-primary/8 shadow-[0_22px_55px_-45px_rgba(234,88,12,0.6)] transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:fixed md:block md:top-16 md:h-[calc(100vh-4rem)]`}
         aria-hidden={!open && "true"}
       >
-        <SidebarHeader>
-          <span className="flex items-center gap-2 font-bold text-lg">
-            <FiShield className="text-primary" /> Resenha Aposta
-          </span>
+        <SidebarHeader className="border-primary/20 bg-primary/8 md:hidden">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
             onClick={closeSidebar}
             aria-label="Fechar menu"
           >
@@ -68,38 +61,37 @@ export function Sidebar() {
         <SidebarContent>
           <SidebarGroup>
             {menuItems.map((item) => {
-              if (item.admin && !user.isAdmin) return null;
+              if (item.requiresAuth && !isAuthenticated) {
+                return null;
+              }
+
               return (
-                <Button
-                  asChild
-                  key={item.href}
-                  variant={pathname === item.href ? "secondary" : "ghost"}
-                  className="justify-start gap-3 px-3 py-2 text-sm font-medium"
-                  onClick={closeSidebar}
-                >
-                  <Link
-                    href={item.href}
-                    aria-current={pathname === item.href ? "page" : undefined}
-                    className="flex flex-1 items-center gap-3"
-                  >
-                    {item.icon}
-                    {item.label}
-                    {item.admin && (
-                      <span className="ml-auto text-xs text-primary flex items-center gap-1">
-                        <FiShield /> ADM
-                      </span>
+                <div key={item.href}>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className={cn(
+                      "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                      pathname === item.href
+                        ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                        : "border-transparent hover:border-primary/20 hover:bg-primary/10",
                     )}
-                  </Link>
-                </Button>
+                    onClick={closeSidebar}
+                  >
+                    <Link
+                      href={item.href}
+                      aria-current={pathname === item.href ? "page" : undefined}
+                      className="flex flex-1 items-center gap-3"
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </Button>
+                </div>
               );
             })}
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>
-          <div className="flex items-center justify-between">
-            {/* Espaço para outros itens do footer, se necessário */}
-          </div>
-        </SidebarFooter>
       </SidebarRoot>
 
       {open && (

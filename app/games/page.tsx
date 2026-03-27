@@ -1,17 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { IDataGame, IPagination } from "@/types/types";
+import { Badge } from "@/components/ui/badge";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
-import { Separator } from "@/components/ui/separator";
+import { GAME_STATUS_COLORS } from "@/enums/status-colors";
 import PaginationShadcn from "@/components/PaginationShadcn";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
-import Link from "next/link";
-import { ConfirmAction } from "@/components/ConfirmAction";
-
-interface GamesApiResponse extends IPagination {
-  data: IDataGame[];
-  [key: string]: any;
-}
+import TiTleSeparator from "@/components/TiTleSeparator";
+import { getGames } from "@/lib/games";
+import { CreateBetSheet } from "./components/CreateBetSheet";
+import { GameAdminActions } from "./components/GameAdminActions";
+import { GameInfoModalAction } from "./components/GameInfoModalAction";
+import { CreateGameAdminButton } from "./components/CreateGameAdminButton";
 
 export default async function Games({
   searchParams,
@@ -26,49 +24,25 @@ export default async function Games({
 
   const currentPage = parseInt(params.page ?? "1");
 
-  const startDate = params.startDate;
-  const endDate = params.endDate;
-  const isExistingFilter = !!startDate && !!endDate;
+  const { startDate, endDate } = params;
 
-  const url = isExistingFilter
-    ? `${process.env.NEXT_PUBLIC_API_URL}/games?startDate=${startDate}&endDate=${endDate}&page=${currentPage}`
-    : `${process.env.NEXT_PUBLIC_API_URL}/games?page=${currentPage}`;
-
-  let games: GamesApiResponse | null = null;
+  let games = null;
 
   try {
-    const response = await fetch(url, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
-    console.log("Resposta da API:", response);
-    games = await response.json();
-  } catch (error: unknown) {
-    console.error(
-      "Erro ao buscar jogos:",
-      error instanceof Error ? error.message : error,
-    );
-  }
-  if (!games || !Array.isArray(games?.data)) {
+    games = await getGames(currentPage, startDate, endDate);
+  } catch {
     return null;
   }
 
+  if (!Array.isArray(games?.data)) return null;
+
   return (
     <>
-      <div className="flex items-center gap-3 pb-6">
-        <Separator className="flex-1" />
-        <span className="text-lg font-semibold text-primary">
-          Todos os Jogos
-        </span>
-        <Separator className="flex-1" />
-      </div>
+      <TiTleSeparator title="Todos os Jogos" />
 
-      <div className="flex justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <DateRangeFilter />
-        <Link href="/games/create">
-          <Button>Criar Jogos</Button>
-        </Link>
+        <CreateGameAdminButton />
       </div>
       {games.data.length === 0 ? (
         <div className="text-center text-muted-foreground">
@@ -76,18 +50,29 @@ export default async function Games({
         </div>
       ) : null}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        {games?.data.map((game) => (
+        {games.data.map((game) => (
           <Card
             key={game.id}
             className="bg-card shadow-md border-primary border"
           >
-            <CardHeader>
-              <CardTitle>
-                {game.homeTeam}{" "}
-                <span className="font-bold">{game.homeScore}</span> x{" "}
-                <span className="font-bold">{game.awayScore}</span>{" "}
-                {game.awayTeam}
-              </CardTitle>
+            <CardHeader className="space-y-3">
+              {game.competition ? (
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
+                  {game.competition}
+                </p>
+              ) : null}
+              <div className="flex items-start justify-between gap-3">
+                <CardTitle>
+                  {game.homeTeam}{" "}
+                  <span className="font-bold">{game.homeScore}</span> x{" "}
+                  <span className="font-bold">{game.awayScore}</span>{" "}
+                  {game.awayTeam}
+                </CardTitle>
+                <GameInfoModalAction
+                  gameId={game.id}
+                  initialInfo={game.moreInfo}
+                />
+              </div>
             </CardHeader>
             <CardContent className="flex flex-col h-full">
               <div className="flex-1 flex flex-col">
@@ -100,22 +85,14 @@ export default async function Games({
                 </div>
                 <div className="text-sm">
                   Status:{" "}
-                  <span
-                    className={
-                      "font-medium " +
-                      (game.status === "FINISHED"
-                        ? "text-primary"
-                        : game.status === "CLOSED"
-                          ? "text-red-600"
-                          : game.status === "SCHEDULED"
-                            ? "text-green-600"
-                            : "")
-                    }
+                  <Badge
+                    variant="outline"
+                    className={GAME_STATUS_COLORS[game.status] ?? ""}
                   >
                     {GAME_STATUS_LABEL[
                       game.status as keyof typeof GAME_STATUS_LABEL
                     ] ?? game.status}
-                  </span>
+                  </Badge>
                 </div>
                 <div className="text-xs mt-2">
                   Apostas fecham:{" "}
@@ -126,33 +103,12 @@ export default async function Games({
                 </div>
               </div>
               {game.status === "SCHEDULED" && (
-                <>
-                  <div className="mt-4 grid grid-cols-3 gap-2 items-end">
-                    <Button variant="outline" className="w-full">
-                      1
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      X
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      2
-                    </Button>
-                  </div>
-                  <Button className="w-full mt-4">Enviar Aposta</Button>
-                </>
+                <div className="w-full mt-4">
+                  <CreateBetSheet game={game} />
+                </div>
               )}
               <div className="flex justify-end mt-4">
-                <Link href={`/games/${game.id}/edit`}>
-                  <Button variant={"link"} className="">
-                    Editar
-                  </Button>
-                </Link>
-                <ConfirmAction
-                  id={game.id}
-                  endpoint="/games"
-                  title="Excluir jogo?"
-                  description="Esse jogo será removido permanentemente."
-                />
+                <GameAdminActions gameId={game.id} />
               </div>
             </CardContent>
           </Card>

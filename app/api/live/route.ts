@@ -59,7 +59,7 @@ export async function GET() {
       }));
 
     return NextResponse.json(matches);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Erro ao buscar jogos ao vivo" },
       { status: 500 },
