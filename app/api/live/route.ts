@@ -37,12 +37,23 @@ export async function GET() {
 
     const res = await fetch(
       `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${today}`,
-      { cache: "no-store" },
+      {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Mozilla/5.0",
+        },
+      },
     );
 
-    const data: SofaScoreResponse = await res.json();
+    if (!res.ok) {
+      return NextResponse.json([]);
+    }
 
-    const matches = data.events
+    const data = (await res.json()) as Partial<SofaScoreResponse>;
+    const events = Array.isArray(data.events) ? data.events : [];
+
+    const matches = events
       .filter(
         (game) =>
           game.status?.type === "inprogress" ||
@@ -60,9 +71,6 @@ export async function GET() {
 
     return NextResponse.json(matches);
   } catch {
-    return NextResponse.json(
-      { error: "Erro ao buscar jogos ao vivo" },
-      { status: 500 },
-    );
+    return NextResponse.json([]);
   }
 }

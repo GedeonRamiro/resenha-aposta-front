@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
     ...extraAllowedDevOrigins,
   ],
   async rewrites() {
+    if (process.env.NODE_ENV !== "development") {
+      return [];
+    }
+
     return [
       {
         source: "/backend/:path*",
