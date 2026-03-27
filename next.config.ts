@@ -6,11 +6,7 @@ const extraAllowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
   .filter(Boolean);
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: [
-    "raymundo-nonhabitable-kole.ngrok-free.dev",
-    "192.168.1.21",
-    ...extraAllowedDevOrigins,
-  ],
+  allowedDevOrigins: extraAllowedDevOrigins,
   async rewrites() {
     if (process.env.NODE_ENV !== "development") {
       return [];
