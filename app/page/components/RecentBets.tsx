@@ -111,7 +111,7 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                     </Badge>
                   ) : null}
                   <span className="text-xs text-muted-foreground">
-                    Atualizada em {formatDate(bet.updatedAt)}
+                    Criada em {formatDate(bet.createdAt)}
                   </span>
                 </div>
               </div>

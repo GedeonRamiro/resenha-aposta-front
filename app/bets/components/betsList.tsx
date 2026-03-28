@@ -106,7 +106,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                         {bet.user.name}
                       </TableCell>
 
-                      <TableCell>{formatDateBR(bet.updatedAt)}</TableCell>
+                      <TableCell>{formatDateBR(bet.createdAt)}</TableCell>
 
                       <TableCell className="text-right">
                         <Badge
