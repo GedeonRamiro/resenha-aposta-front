@@ -21,18 +21,12 @@ import {
 import { getBetResultLabel } from "@/lib/bets";
 import { IDataBet, IDataUser } from "@/types/types";
 import { getUserById, getUserRoleLabel } from "@/lib/users";
+import { formatDateTimeBR } from "@/lib/date-time";
 import { UserAdminActions } from "./components/UserAdminActions";
 import { UserBetActions } from "./components/UserBetActions";
 
 interface IUserDetails extends IDataUser {
   bets: IDataBet[];
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
 }
 
 function getBetOptionLabel(bet: IDataBet): string {
@@ -129,11 +123,11 @@ export default async function UserDetails({
               </p>
               <p>
                 <span className="font-semibold">Criado em:</span>{" "}
-                {formatDate(user.createdAt)}
+                {formatDateTimeBR(user.createdAt)}
               </p>
               <p>
                 <span className="font-semibold">Atualizado em:</span>{" "}
-                {formatDate(user.updatedAt)}
+                {formatDateTimeBR(user.updatedAt)}
               </p>
 
               <UserAdminActions userId={user.id} currentRole={user.role} />
@@ -215,7 +209,9 @@ export default async function UserDetails({
                                   </span>
                                 )}
                               </TableCell>
-                              <TableCell>{formatDate(bet.createdAt)}</TableCell>
+                              <TableCell>
+                                {formatDateTimeBR(bet.createdAt)}
+                              </TableCell>
                               <TableCell className="text-right">
                                 <UserBetActions
                                   betId={bet.id}

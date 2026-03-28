@@ -7,6 +7,7 @@ import Link from "next/link";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { getGameById } from "@/lib/games";
+import { formatDateTimeBR } from "@/lib/date-time";
 import { CreateBetSheet } from "../components/CreateBetSheet";
 import { GameAdminActions } from "../components/GameAdminActions";
 import { GenerateInfoButton } from "../components/GenerateInfoButton";
@@ -67,7 +68,7 @@ export default async function GameDetails({
                 Data e Hora
               </label>
               <p className="text-lg">
-                {new Date(game.gameDate).toLocaleString("pt-BR", {
+                {formatDateTimeBR(game.gameDate, {
                   dateStyle: "long",
                   timeStyle: "short",
                 })}
@@ -106,7 +107,7 @@ export default async function GameDetails({
                 Apostas fecham em
               </label>
               <p className="text-lg">
-                {new Date(game.betCloseAt).toLocaleString("pt-BR", {
+                {formatDateTimeBR(game.betCloseAt, {
                   dateStyle: "long",
                   timeStyle: "short",
                 })}

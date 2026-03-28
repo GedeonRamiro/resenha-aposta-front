@@ -270,11 +270,12 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               name="moreInfo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Informações (IA/manual)</FormLabel>
+                  <FormLabel>Informações (IA/manual em markdown)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Transmissão, análise e porcentagens"
+                    <textarea
+                      placeholder="Digite as informações do jogo em markdown..."
                       disabled={isBusy}
+                      className="min-h-48 w-full rounded-md border bg-background p-3 font-mono text-sm resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       {...field}
                     />
                   </FormControl>

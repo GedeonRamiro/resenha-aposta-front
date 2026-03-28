@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBlogPostById } from "@/lib/blog-posts";
+import { formatDateTimeBR } from "@/lib/date-time";
 import BlogMarkdown from "../components/BlogMarkdown";
 
 export default async function BlogPostDetailPage({
@@ -45,11 +46,7 @@ export default async function BlogPostDetailPage({
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            ID: {post.id} | Atualizado em{" "}
-            {new Date(post.updatedAt).toLocaleString("pt-BR", {
-              dateStyle: "short",
-              timeStyle: "short",
-            })}
+            ID: {post.id} | Atualizado em {formatDateTimeBR(post.updatedAt)}
           </p>
         </CardHeader>
         <CardContent>

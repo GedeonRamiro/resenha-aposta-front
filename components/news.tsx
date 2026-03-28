@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Skeleton } from "./ui/skeleton";
+import { formatDateBR } from "@/lib/date-time";
 
 type News = {
   url?: string;
@@ -31,16 +32,12 @@ function formatNewsDate(date?: string): string {
     return "Atualizacao recente";
   }
 
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "Atualizacao recente";
-  }
-
-  return parsed.toLocaleDateString("pt-BR", {
+  const formatted = formatDateBR(date, {
     day: "2-digit",
     month: "short",
   });
+
+  return formatted === "-" ? "Atualizacao recente" : formatted;
 }
 
 export default function News() {

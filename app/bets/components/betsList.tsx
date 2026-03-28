@@ -20,6 +20,7 @@ import {
   BET_RESULT_COLORS,
 } from "@/enums/status-colors";
 import { getBetResultLabel } from "@/lib/bets";
+import { formatDateBR, formatDateTimeBR } from "@/lib/date-time";
 import { IDataBet } from "@/types/types";
 
 type BetsGroup = {
@@ -69,7 +70,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                 {group.game.homeTeam} {group.game.homeScore} x{" "}
                 {group.game.awayScore} {group.game.awayTeam}{" "}
                 <p className="text-xs text-muted-foreground">
-                  ({new Date(group.game.gameDate).toLocaleString("pt-BR")})
+                  ({formatDateTimeBR(group.game.gameDate)})
                 </p>
               </span>
 
@@ -105,9 +106,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                         {bet.user.name}
                       </TableCell>
 
-                      <TableCell>
-                        {new Date(bet.updatedAt).toLocaleDateString("pt-BR")}
-                      </TableCell>
+                      <TableCell>{formatDateBR(bet.updatedAt)}</TableCell>
 
                       <TableCell className="text-right">
                         <Badge

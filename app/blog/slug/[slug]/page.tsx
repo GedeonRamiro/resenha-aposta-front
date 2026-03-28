@@ -2,6 +2,7 @@ import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBlogPostBySlug } from "@/lib/blog-posts";
+import { formatDateTimeBR } from "@/lib/date-time";
 import BlogMarkdown from "../../components/BlogMarkdown";
 
 export default async function BlogPostDetailBySlugPage({
@@ -38,11 +39,7 @@ export default async function BlogPostDetailBySlugPage({
             <CardTitle>{post.title}</CardTitle>
           </div>
           <p className="text-xs text-muted-foreground">
-            Atualizado em{" "}
-            {new Date(post.updatedAt).toLocaleString("pt-BR", {
-              dateStyle: "short",
-              timeStyle: "short",
-            })}
+            Atualizado em {formatDateTimeBR(post.updatedAt)}
           </p>
         </CardHeader>
         <CardContent>

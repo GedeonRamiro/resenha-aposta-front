@@ -1,11 +1,9 @@
 import { IDataBet } from "@/types/types";
 import { BET_OPTION_LABEL } from "@/enums/bet-option";
+import { formatDateTimeBR } from "@/lib/date-time";
 
 export function formatDate(date: string): string {
-  return new Date(date).toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
+  return formatDateTimeBR(date);
 }
 
 export function getBetOptionLabel(bet: IDataBet): string {

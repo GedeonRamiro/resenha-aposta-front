@@ -28,6 +28,7 @@ import {
 } from "@/enums/status-colors";
 import { ApiBetOption, getBetById, updateBetById } from "@/lib/bets";
 import { getBetResultLabel } from "@/lib/bets";
+import { formatDateTimeBR } from "@/lib/date-time";
 
 type BetOptionKey = keyof typeof BET_OPTION_LABEL;
 
@@ -43,13 +44,6 @@ function getBetOptionText(option: ApiBetOption, bet: IDataBet): string {
   }
 
   return BET_OPTION_LABEL[option as BetOptionKey] ?? option;
-}
-
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
 }
 
 export default function EditBetPage() {
@@ -171,13 +165,13 @@ export default function EditBetPage() {
                     </p>
                     <p>
                       <span className="font-semibold">Data do jogo:</span>{" "}
-                      {formatDateTime(bet.game.gameDate)}
+                      {formatDateTimeBR(bet.game.gameDate)}
                     </p>
                     <p>
                       <span className="font-semibold">
                         Fechamento das apostas:
                       </span>{" "}
-                      {formatDateTime(bet.game.betCloseAt)}
+                      {formatDateTimeBR(bet.game.betCloseAt)}
                     </p>
                     <p>
                       <span className="font-semibold">Aposta:</span>{" "}

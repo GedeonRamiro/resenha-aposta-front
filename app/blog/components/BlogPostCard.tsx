@@ -14,6 +14,7 @@ import {
 import { ConfirmAction } from "@/components/ConfirmAction";
 import { IBlogPost } from "@/types/types";
 import { useBackendUser } from "@/lib/useBackendUser";
+import { formatDateTimeBR } from "@/lib/date-time";
 
 interface BlogPostCardProps {
   post: IBlogPost;
@@ -84,10 +85,7 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
           ) : null}
         </div>
         <p className="text-xs text-muted-foreground">
-          {new Date(post.createdAt).toLocaleString("pt-BR", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })}
+          {formatDateTimeBR(post.createdAt)}
           {` • ${readingTimeLabel}`}
         </p>
       </CardHeader>

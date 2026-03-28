@@ -6,6 +6,7 @@ import PaginationShadcn from "@/components/PaginationShadcn";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import { getGames } from "@/lib/games";
+import { formatDateTimeBR } from "@/lib/date-time";
 import { CreateBetSheet } from "./components/CreateBetSheet";
 import { GameAdminActions } from "./components/GameAdminActions";
 import { GameInfoModalAction } from "./components/GameInfoModalAction";
@@ -78,7 +79,7 @@ export default async function Games({
               <div className="flex-1 flex flex-col">
                 <div></div>
                 <div className="text-xs text-muted-foreground mb-2">
-                  {new Date(game.gameDate).toLocaleString("pt-BR", {
+                  {formatDateTimeBR(game.gameDate, {
                     dateStyle: "short",
                     timeStyle: "short",
                   })}
@@ -96,7 +97,7 @@ export default async function Games({
                 </div>
                 <div className="text-xs mt-2">
                   Apostas fecham:{" "}
-                  {new Date(game.betCloseAt).toLocaleString("pt-BR", {
+                  {formatDateTimeBR(game.betCloseAt, {
                     dateStyle: "short",
                     timeStyle: "short",
                   })}

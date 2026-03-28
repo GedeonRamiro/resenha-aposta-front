@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pencil } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -160,10 +161,12 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
   if (existingBetId) {
     return (
       <Button
-        className="w-full"
+        variant="secondary"
+        className="w-full border border-orange-500/35 bg-orange-500/12 text-orange-700 hover:bg-orange-500/18"
         disabled={isLoading || isCheckingExistingBet}
         onClick={() => router.push(`/bets/${existingBetId}`)}
       >
+        <Pencil className="size-4" />
         {isCheckingExistingBet ? "Verificando..." : "Editar Aposta"}
       </Button>
     );
@@ -172,7 +175,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="w-full" disabled={isCheckingExistingBet}>
+        <Button className="w-full " disabled={isCheckingExistingBet}>
           {isCheckingExistingBet ? "Verificando..." : "Fazer Aposta"}
         </Button>
       </SheetTrigger>
