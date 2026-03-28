@@ -210,7 +210,7 @@ export default async function UserDetails({
                                 )}
                               </TableCell>
                               <TableCell>
-                                {formatDateTimeBR(bet.createdAt)}
+                                {formatDateTimeBR(bet.updatedAt)}
                               </TableCell>
                               <TableCell className="text-right">
                                 <UserBetActions
