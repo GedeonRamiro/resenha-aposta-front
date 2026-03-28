@@ -3,44 +3,14 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/UserAvatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { BET_OPTION_LABEL } from "@/enums/bet-option";
-import { GAME_STATUS_LABEL } from "@/enums/game-status";
-import {
-  BET_OPTION_COLORS,
-  BET_RESULT_COLORS,
-  GAME_STATUS_COLORS,
-} from "@/enums/status-colors";
-import { getBetResultLabel } from "@/lib/bets";
 import { IDataBet, IDataUser } from "@/types/types";
 import { getUserById, getUserRoleLabel } from "@/lib/users";
 import { formatDateTimeBR } from "@/lib/date-time";
 import { UserAdminActions } from "./components/UserAdminActions";
-import { UserBetActions } from "./components/UserBetActions";
+import { UserBetsTable } from "./components/UserBetsTable";
 
 interface IUserDetails extends IDataUser {
   bets: IDataBet[];
-}
-
-function getBetOptionLabel(bet: IDataBet): string {
-  if (bet.option === "HOME_WIN") {
-    return `Vitória ${bet.game.homeTeam}`;
-  }
-
-  if (bet.option === "AWAY_WIN") {
-    return `Vitória ${bet.game.awayTeam}`;
-  }
-
-  return (
-    BET_OPTION_LABEL[bet.option as keyof typeof BET_OPTION_LABEL] ?? bet.option
-  );
 }
 
 export default async function UserDetails({
@@ -144,88 +114,7 @@ export default async function UserDetails({
                   Esse usuário ainda não possui apostas.
                 </p>
               ) : (
-                <Table className="min-w-215">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-45">Jogo</TableHead>
-                      <TableHead>Opção</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Placar</TableHead>
-                      <TableHead>Resultado</TableHead>
-                      <TableHead>Data da aposta</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {user.bets.map((bet) => (
-                      <TableRow key={bet.id}>
-                        {(() => {
-                          const betResult = getBetResultLabel(bet);
-
-                          return (
-                            <>
-                              <TableCell className="whitespace-normal wrap-break-word font-medium">
-                                {bet.game.homeTeam} x {bet.game.awayTeam}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    BET_OPTION_COLORS[bet.option] ?? ""
-                                  }
-                                >
-                                  {getBetOptionLabel(bet)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    GAME_STATUS_COLORS[bet.game.status] ?? ""
-                                  }
-                                >
-                                  {GAME_STATUS_LABEL[
-                                    bet.game
-                                      .status as keyof typeof GAME_STATUS_LABEL
-                                  ] ?? bet.game.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {bet.game.homeScore} x {bet.game.awayScore}
-                              </TableCell>
-                              <TableCell>
-                                {betResult ? (
-                                  <Badge
-                                    variant="outline"
-                                    className={
-                                      BET_RESULT_COLORS[betResult] ?? ""
-                                    }
-                                  >
-                                    {betResult}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    -
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {formatDateTimeBR(bet.updatedAt)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <UserBetActions
-                                  betId={bet.id}
-                                  betUserId={bet.userId}
-                                  gameStatus={bet.game.status}
-                                />
-                              </TableCell>
-                            </>
-                          );
-                        })()}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <UserBetsTable bets={user.bets} userId={user.id} />
               )}
             </CardContent>
           </Card>

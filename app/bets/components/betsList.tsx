@@ -13,36 +13,20 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
-import { BET_OPTION_LABEL } from "@/enums/bet-option";
-import {
-  GAME_STATUS_COLORS,
-  BET_OPTION_COLORS,
-  BET_RESULT_COLORS,
-} from "@/enums/status-colors";
+import { GAME_STATUS_COLORS, BET_RESULT_COLORS } from "@/enums/status-colors";
 import { getBetResultLabel } from "@/lib/bets";
 import { formatDateBR, formatDateTimeBR } from "@/lib/date-time";
 import { IDataBet } from "@/types/types";
+import { useBackendUser } from "@/lib/useBackendUser";
+import { BetVisibility } from "./BetVisibility";
 
 type BetsGroup = {
   game: IDataBet["game"];
   bets: IDataBet[];
 };
 
-function getOptionLabel(bet: IDataBet): string {
-  if (bet.option === "HOME_WIN") {
-    return `Vitória ${bet.game.homeTeam}`;
-  }
-
-  if (bet.option === "AWAY_WIN") {
-    return `Vitória ${bet.game.awayTeam}`;
-  }
-
-  return (
-    BET_OPTION_LABEL[bet.option as keyof typeof BET_OPTION_LABEL] ?? bet.option
-  );
-}
-
 export default function BetsList({ data }: { data: IDataBet[] }) {
+  const { backendUser } = useBackendUser();
   const grouped = Object.values(
     data.reduce<Record<string, BetsGroup>>((acc, bet) => {
       const gameId = bet.game.id;
@@ -109,12 +93,10 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                       <TableCell>{formatDateBR(bet.createdAt)}</TableCell>
 
                       <TableCell className="text-right">
-                        <Badge
-                          variant="outline"
-                          className={BET_OPTION_COLORS[bet.option] ?? ""}
-                        >
-                          {getOptionLabel(bet)}
-                        </Badge>
+                        <BetVisibility
+                          bet={bet}
+                          currentUserId={backendUser?.id}
+                        />
                       </TableCell>
 
                       <TableCell className="text-right">

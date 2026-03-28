@@ -23,6 +23,7 @@ export interface IDataBet {
   settledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  lastEditedAt: string | null;
   game: IDataGame;
   user: IDataUser;
 }
