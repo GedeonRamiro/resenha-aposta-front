@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BetVisibility } from "@/app/bets/components/BetVisibility";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,16 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  BET_OPTION_COLORS,
-  BET_RESULT_COLORS,
-  GAME_STATUS_COLORS,
-} from "@/enums/status-colors";
+import { BET_RESULT_COLORS, GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
 import { getBetResultLabel } from "@/lib/bets";
 import { cn } from "@/lib/utils";
 import { IDataBet } from "@/types/types";
-import { formatDate, getBetOptionLabel, getInitials } from "./utils";
+import { formatDate, getInitials } from "./utils";
 
 const surfaceCardClassName =
   "border border-primary/25 bg-linear-to-b from-primary/8 via-card to-primary/4 shadow-[0_20px_55px_-44px_rgba(234,88,12,0.55)] ring-primary/20";
@@ -90,15 +87,7 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-[11px] font-semibold",
-                      BET_OPTION_COLORS[bet.option] ?? "",
-                    )}
-                  >
-                    {getBetOptionLabel(bet)}
-                  </Badge>
+                  <BetVisibility bet={bet} />
                   {betResult ? (
                     <Badge
                       variant="outline"
