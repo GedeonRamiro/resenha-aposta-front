@@ -124,12 +124,6 @@ export default function EditBetPage() {
       />
       <TiTleSeparator title="Editar Aposta" />
 
-      <div className="mb-6">
-        <Button asChild variant="outline">
-          <Link href="/bets">Voltar para apostas</Link>
-        </Button>
-      </div>
-
       <div className="mx-auto w-full max-w-xl">
         <Card>
           <CardHeader>

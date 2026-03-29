@@ -9,39 +9,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  BET_OPTION_COLORS,
-  BET_RESULT_COLORS,
-  GAME_STATUS_COLORS,
-} from "@/enums/status-colors";
-import { BET_OPTION_LABEL } from "@/enums/bet-option";
+import { BET_RESULT_COLORS, GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
 import { getBetResultLabel } from "@/lib/bets";
 import { formatDateTimeBR } from "@/lib/date-time";
 import { IDataBet } from "@/types/types";
 import { UserBetActions } from "./UserBetActions";
-import { EyeOff } from "lucide-react";
+import { BetVisibility } from "@/app/bets/components/BetVisibility";
+import { useBackendUser } from "@/lib/useBackendUser";
 
 interface UserBetsTableProps {
   bets: IDataBet[];
   userId: string;
 }
 
-function getBetOptionLabel(bet: IDataBet): string {
-  if (bet.option === "HOME_WIN") {
-    return `Vitória ${bet.game.homeTeam}`;
-  }
-
-  if (bet.option === "AWAY_WIN") {
-    return `Vitória ${bet.game.awayTeam}`;
-  }
-
-  return (
-    BET_OPTION_LABEL[bet.option as keyof typeof BET_OPTION_LABEL] ?? bet.option
-  );
-}
-
 export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
+  const { backendUser } = useBackendUser();
+
   return (
     <Table className="min-w-215">
       <TableHeader>
@@ -58,30 +42,15 @@ export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
       <TableBody>
         {bets.map((bet) => {
           const betResult = getBetResultLabel(bet);
-          const isScheduled = bet.game.status === "SCHEDULED";
-          const shouldHideBet = isScheduled;
 
           return (
             <TableRow key={bet.id}>
               <TableCell className="whitespace-normal wrap-break-word font-medium">
                 {bet.game.homeTeam} x {bet.game.awayTeam}
               </TableCell>
+
               <TableCell>
-                {shouldHideBet ? (
-                  <div className="flex items-center gap-2">
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      Oculta
-                    </span>
-                  </div>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className={BET_OPTION_COLORS[bet.option] ?? ""}
-                  >
-                    {getBetOptionLabel(bet)}
-                  </Badge>
-                )}
+                <BetVisibility bet={bet} currentUserId={backendUser?.id} />
               </TableCell>
               <TableCell>
                 <Badge

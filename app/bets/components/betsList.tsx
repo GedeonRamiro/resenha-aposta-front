@@ -75,7 +75,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                 <TableRow>
                   <TableHead className="w-40">Apostador</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Aposta</TableHead>
+                  <TableHead>Aposta</TableHead>
                   <TableHead className="text-right">Resultado</TableHead>
                 </TableRow>
               </TableHeader>
@@ -92,7 +92,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
 
                       <TableCell>{formatDateBR(bet.createdAt)}</TableCell>
 
-                      <TableCell className="text-right">
+                      <TableCell>
                         <BetVisibility
                           bet={bet}
                           currentUserId={backendUser?.id}
