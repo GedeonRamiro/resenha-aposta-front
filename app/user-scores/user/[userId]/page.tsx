@@ -55,13 +55,6 @@ export default async function UserScoreDetail({
         }
       />
 
-      <div className="flex justify-between items-center mb-6">
-        <DateRangeFilter />
-        <Button asChild variant="outline">
-          <Link href="/user-scores">← Voltar ao Ranking</Link>
-        </Button>
-      </div>
-
       {error ? (
         <p className="text-sm text-red-600">{error}</p>
       ) : !userScore ? (

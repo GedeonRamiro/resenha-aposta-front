@@ -131,7 +131,7 @@ function PodiumColumn({
       <span className="text-sm font-bold">{item.points} pts</span>
       <div
         className="w-full rounded-t-lg flex items-end justify-center pb-2"
-        style={{ height: `${heightPct}%`, backgroundColor: bar }}
+        style={{ height: `${heightPct * 1.2}px`, backgroundColor: bar }}
       >
         <span className={`text-xs font-bold px-1 rounded ${badge}`}>
           {label}
