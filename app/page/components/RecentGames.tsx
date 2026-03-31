@@ -164,9 +164,6 @@ export default function RecentGames({ games }: RecentGamesProps) {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-
-              <CarouselPrevious className="-top-15 left-auto right-12 hidden translate-y-0 border-primary/15 bg-background sm:flex" />
-              <CarouselNext className="-top-15 right-0 hidden translate-y-0 border-primary/15 bg-background sm:flex" />
             </Carousel>
 
             {snapCount > 1 ? (
