@@ -61,7 +61,7 @@ export default function HitRateChart({ data }: { data: RankingItem[] }) {
       {/* Pontos vs Apostas (SVG scatter-like) */}
       <Card>
         <CardHeader>
-          <CardTitle>Pontos × Apostas</CardTitle>
+          <CardTitle>Pontos × Apostas por Apostador</CardTitle>
         </CardHeader>
         <CardContent>
           <ScatterPlot data={top} />
@@ -72,95 +72,107 @@ export default function HitRateChart({ data }: { data: RankingItem[] }) {
 }
 
 function ScatterPlot({ data }: { data: RankingItem[] }) {
-  const maxBets = Math.max(...data.map((i) => i.bets), 1);
-  const maxPoints = Math.max(...data.map((i) => i.points), 1);
-  const W = 300;
-  const H = 180;
-  const PAD = 30;
+  const maxValue = Math.max(...data.map((i) => Math.max(i.bets, i.points)), 1);
+  const rowHeight = 26;
+  const W = 420;
+  const H = Math.max(140, data.length * rowHeight + 46);
+  const leftPad = 120;
+  const rightPad = 20;
+  const topPad = 20;
+  const plotWidth = W - leftPad - rightPad;
 
-  const colors = [
-    "#F59E0B",
-    "#94A3B8",
-    "#B45309",
-    "#3B82F6",
-    "#8B5CF6",
-    "#EC4899",
-    "#14B8A6",
-    "#F97316",
-    "#06B6D4",
-    "#A855F7",
-  ];
+  const getX = (value: number) => leftPad + (value / maxValue) * plotWidth;
 
-  const points = data.map((item, i) => ({
-    cx: PAD + (item.bets / maxBets) * (W - PAD * 2),
-    cy: H - PAD - (item.points / maxPoints) * (H - PAD * 2),
-    color: colors[i % colors.length],
-    label: item.user.name.split(" ")[0],
-    bets: item.bets,
-    points: item.points,
-  }));
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const value = Math.round(maxValue * ratio);
+    return { x: getX(value), value };
+  });
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-      {/* Axes */}
-      <line
-        x1={PAD}
-        y1={PAD / 2}
-        x2={PAD}
-        y2={H - PAD}
-        stroke="currentColor"
-        strokeOpacity={0.2}
-        strokeWidth={1}
-      />
-      <line
-        x1={PAD}
-        y1={H - PAD}
-        x2={W - PAD / 2}
-        y2={H - PAD}
-        stroke="currentColor"
-        strokeOpacity={0.2}
-        strokeWidth={1}
-      />
-
-      {/* Axis labels */}
-      <text
-        x={W / 2}
-        y={H - 4}
-        textAnchor="middle"
-        fontSize={9}
-        fill="currentColor"
-        opacity={0.5}
+    <div className="space-y-3">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        role="img"
+        aria-label="Comparativo de pontos e apostas por apostador"
       >
-        Apostas
-      </text>
-      <text
-        x={8}
-        y={H / 2}
-        textAnchor="middle"
-        fontSize={9}
-        fill="currentColor"
-        opacity={0.5}
-        transform={`rotate(-90, 8, ${H / 2})`}
-      >
-        Pontos
-      </text>
+        {/* Vertical grid lines and value ticks */}
+        {ticks.map((tick, i) => (
+          <g key={`tick-${i}`}>
+            <line
+              x1={tick.x}
+              y1={topPad - 8}
+              x2={tick.x}
+              y2={H - 24}
+              stroke="currentColor"
+              strokeOpacity={0.1}
+              strokeWidth={1}
+            />
+            <text
+              x={tick.x}
+              y={H - 8}
+              textAnchor="middle"
+              fontSize={9}
+              fill="currentColor"
+              opacity={0.6}
+            >
+              {tick.value}
+            </text>
+          </g>
+        ))}
 
-      {/* Data points */}
-      {points.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.cx} cy={p.cy} r={6} fill={p.color} opacity={0.85} />
-          <text
-            x={p.cx}
-            y={p.cy - 9}
-            textAnchor="middle"
-            fontSize={8}
-            fill="currentColor"
-            opacity={0.8}
-          >
-            {p.label}
-          </text>
-        </g>
-      ))}
-    </svg>
+        {/* One row per bettor: left label + connecting segment + two dots */}
+        {data.map((item, index) => {
+          const y = topPad + index * rowHeight;
+          const xBets = getX(item.bets);
+          const xPoints = getX(item.points);
+          const name = item.user.name;
+
+          return (
+            <g key={item.user.id}>
+              <text
+                x={leftPad - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize={10}
+                fill="currentColor"
+                opacity={0.9}
+              >
+                {name.length > 18 ? `${name.slice(0, 18)}...` : name}
+              </text>
+
+              <line
+                x1={Math.min(xBets, xPoints)}
+                y1={y}
+                x2={Math.max(xBets, xPoints)}
+                y2={y}
+                stroke="currentColor"
+                strokeOpacity={0.4}
+                strokeWidth={2}
+              />
+
+              <circle cx={xBets} cy={y} r={4.2} fill="#3B82F6">
+                <title>{`${name}: ${item.bets} apostas`}</title>
+              </circle>
+
+              <circle cx={xPoints} cy={y} r={4.2} fill="#22C55E">
+                <title>{`${name}: ${item.points} pontos`}</title>
+              </circle>
+            </g>
+          );
+        })}
+      </svg>
+
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+          Apostas
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+          Pontos
+        </span>
+      </div>
+    </div>
   );
 }
