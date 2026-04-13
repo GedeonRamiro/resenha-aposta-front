@@ -1,18 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BET_RESULT_COLORS, GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
 import { getBetResultLabel } from "@/lib/bets";
-import { formatDateTimeBR } from "@/lib/date-time";
+import { formatDateTimeBR, formatDateBR } from "@/lib/date-time";
 import { IDataBet } from "@/types/types";
 import { UserBetActions } from "./UserBetActions";
 import { BetVisibility } from "@/app/bets/components/BetVisibility";
@@ -23,72 +16,128 @@ interface UserBetsTableProps {
   userId: string;
 }
 
+type BetsGroup = {
+  game: IDataBet["game"];
+  bets: IDataBet[];
+};
+
 export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
   const { backendUser } = useBackendUser();
 
+  const grouped = Object.values(
+    bets.reduce<Record<string, BetsGroup>>((acc, bet) => {
+      const gameId = bet.game.id;
+
+      if (!acc[gameId]) {
+        acc[gameId] = {
+          game: bet.game,
+          bets: [],
+        };
+      }
+
+      acc[gameId].bets.push(bet);
+
+      return acc;
+    }, {}),
+  );
+
   return (
-    <Table className="min-w-215">
-      <TableHeader>
-        <TableRow>
-          <TableHead className="min-w-45">Jogo</TableHead>
-          <TableHead>Opção</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Placar</TableHead>
-          <TableHead>Resultado</TableHead>
-          <TableHead>Data da aposta</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {bets.map((bet) => {
-          const betResult = getBetResultLabel(bet);
+    <div className="space-y-4">
+      {grouped.map((group) => (
+        <Card key={group.game.id}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <div className="text-sm font-semibold">
+                  {group.game.homeTeam}{" "}
+                  {typeof group.game.homeScore === "number"
+                    ? group.game.homeScore
+                    : "-"}{" "}
+                  x{" "}
+                  {typeof group.game.awayScore === "number"
+                    ? group.game.awayScore
+                    : "-"}{" "}
+                  {group.game.awayTeam}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatDateTimeBR(group.game.gameDate)}
+                </p>
+              </div>
 
-          return (
-            <TableRow key={bet.id}>
-              <TableCell className="whitespace-normal wrap-break-word font-medium">
-                {bet.game.homeTeam} x {bet.game.awayTeam}
-              </TableCell>
+              <Badge
+                variant="outline"
+                className={`shrink-0 ${GAME_STATUS_COLORS[group.game.status] ?? ""}`}
+              >
+                {GAME_STATUS_LABEL[
+                  group.game.status as keyof typeof GAME_STATUS_LABEL
+                ] ?? group.game.status}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
 
-              <TableCell>
-                <BetVisibility bet={bet} currentUserId={backendUser?.id} />
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={GAME_STATUS_COLORS[bet.game.status] ?? ""}
-                >
-                  {GAME_STATUS_LABEL[
-                    bet.game.status as keyof typeof GAME_STATUS_LABEL
-                  ] ?? bet.game.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {bet.game.homeScore} x {bet.game.awayScore}
-              </TableCell>
-              <TableCell>
-                {betResult ? (
-                  <Badge
-                    variant="outline"
-                    className={BET_RESULT_COLORS[betResult] ?? ""}
+          <CardContent>
+            <div className="space-y-2">
+              {group.bets.map((bet) => {
+                const betResult = getBetResultLabel(bet);
+
+                return (
+                  <div
+                    key={bet.id}
+                    className="flex flex-col gap-3 rounded-lg border border-border/40 bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    {betResult}
-                  </Badge>
-                ) : (
-                  <span className="text-xs text-muted-foreground">-</span>
-                )}
-              </TableCell>
-              <TableCell>{formatDateTimeBR(bet.updatedAt)}</TableCell>
-              <TableCell className="text-right">
-                <UserBetActions
-                  betId={bet.id}
-                  betUserId={bet.userId}
-                  gameStatus={bet.game.status}
-                />
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+                    <div className="min-w-0 flex-1 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Aposta:
+                        </span>
+                        <BetVisibility
+                          bet={bet}
+                          currentUserId={backendUser?.id}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Resultado:
+                        </span>
+                        {betResult ? (
+                          <Badge
+                            variant="outline"
+                            className={BET_RESULT_COLORS[betResult] ?? ""}
+                          >
+                            {betResult}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            -
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                      <div className="flex flex-col text-xs">
+                        <span className="font-medium text-muted-foreground">
+                          Data da aposta:
+                        </span>
+                        <span className="text-foreground">
+                          {formatDateTimeBR(bet.createdAt)}
+                        </span>
+                      </div>
+
+                      <UserBetActions
+                        betId={bet.id}
+                        betUserId={bet.userId}
+                        gameStatus={bet.game.status}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
