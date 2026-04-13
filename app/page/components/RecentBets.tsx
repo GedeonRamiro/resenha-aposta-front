@@ -17,6 +17,7 @@ import { getBetResultLabel } from "@/lib/bets";
 import { cn } from "@/lib/utils";
 import { IDataBet } from "@/types/types";
 import { formatDate, getInitials } from "./utils";
+import { UserAvatar } from "@/components/UserAvatar";
 
 const surfaceCardClassName =
   "border border-primary/25 bg-linear-to-b from-primary/8 via-card to-primary/4 shadow-[0_20px_55px_-44px_rgba(234,88,12,0.55)] ring-primary/20";
@@ -63,7 +64,11 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {getInitials(bet.user.name)}
+                      <UserAvatar
+                        name={bet.user.name}
+                        image={bet.user.image}
+                        className="h-7 w-7 shrink-0"
+                      />
                     </div>
                     <div>
                       <p className="font-medium">{bet.user.name}</p>
