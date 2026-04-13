@@ -81,9 +81,6 @@ export default async function UserDetails({
                 <span className="font-semibold">Nome:</span> {user.name}
               </p>
               <p>
-                <span className="font-semibold">Email:</span> {user.email}
-              </p>
-              <p>
                 <span className="font-semibold">Perfil:</span>{" "}
                 {getUserRoleLabel(user.role)}
               </p>

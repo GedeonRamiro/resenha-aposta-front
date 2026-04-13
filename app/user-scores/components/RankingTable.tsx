@@ -63,9 +63,6 @@ export default function RankingTable({ data }: { data: RankingItem[] }) {
                         <span className="font-medium truncate">
                           {item.user.name}
                         </span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {item.user.email}
-                        </span>
                       </div>
                     </div>
                   </TableCell>

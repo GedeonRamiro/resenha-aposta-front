@@ -67,7 +67,6 @@ export default async function Users({
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead className="text-right">Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
@@ -82,7 +81,6 @@ export default async function Users({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/users/${user.id}`}>Ver detalhes</Link>

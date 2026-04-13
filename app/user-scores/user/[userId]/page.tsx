@@ -80,10 +80,7 @@ export default async function UserScoreDetail({
                 <span className="text-muted-foreground text-sm">Nome</span>
                 <span className="font-medium">{userScore.user.name}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-sm">Email</span>
-                <span className="text-sm">{userScore.user.email}</span>
-              </div>
+              <div className="flex items-center justify-between"></div>
               {position >= 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground text-sm">
