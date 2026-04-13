@@ -152,12 +152,16 @@ export default function RecentGames({ games }: RecentGamesProps) {
 
                       {typeof game.homeScore === "number" &&
                       typeof game.awayScore === "number" ? (
-                        <div className="mt-6 flex items-center justify-between rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm font-medium">
-                          <span>{game.homeTeam}</span>
-                          <span className="text-base font-semibold text-primary">
+                        <div className="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm font-medium">
+                          <span className="min-w-0 leading-tight wrap-anywhere">
+                            {game.homeTeam}
+                          </span>
+                          <span className="shrink-0 rounded-full bg-background/80 px-3 py-1 text-base font-semibold text-primary tabular-nums whitespace-nowrap">
                             {game.homeScore} x {game.awayScore}
                           </span>
-                          <span>{game.awayTeam}</span>
+                          <span className="min-w-0 text-right leading-tight wrap-anywhere">
+                            {game.awayTeam}
+                          </span>
                         </div>
                       ) : null}
                     </div>
