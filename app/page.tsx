@@ -26,7 +26,7 @@ export default async function Home() {
   const posts = postsResult.status === "fulfilled" ? postsResult.value : null;
 
   const topGames = games?.data?.slice(0, 10) ?? [];
-  const topBets = bets?.data ?? [];
+  const topBets = bets?.data?.slice(0, 40) ?? [];
   const topRanking = ranking?.slice(0, 5) ?? [];
   const latestPosts = posts?.data?.slice(0, 5) ?? [];
 
