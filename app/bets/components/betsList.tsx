@@ -73,7 +73,9 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
             <Table className="w-max min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-40">Apostador</TableHead>
+                  <TableHead className="sticky left-0 z-20 w-36 min-w-36 max-w-36 bg-card shadow-[1px_0_0_0_hsl(var(--border))] sm:w-44 sm:min-w-44 sm:max-w-44">
+                    Apostador
+                  </TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Aposta</TableHead>
                   <TableHead className="text-right">Resultado</TableHead>
@@ -86,8 +88,13 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
 
                   return (
                     <TableRow key={bet.id}>
-                      <TableCell className="font-medium whitespace-normal break-all">
-                        {bet.user.name}
+                      <TableCell
+                        className="sticky left-0 z-10 w-36 min-w-36 max-w-36 bg-card font-medium shadow-[1px_0_0_0_hsl(var(--border))] sm:w-44 sm:min-w-44 sm:max-w-44"
+                        title={bet.user.name}
+                      >
+                        <span className="block truncate whitespace-nowrap">
+                          {bet.user.name}
+                        </span>
                       </TableCell>
 
                       <TableCell>{formatDateBR(bet.createdAt)}</TableCell>
