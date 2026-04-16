@@ -120,7 +120,15 @@ export default function RecentGames({ games }: RecentGamesProps) {
                             {game.competition ?? "Partida cadastrada"}
                           </p>
                           <p className="mt-2 text-lg font-semibold leading-snug">
-                            {game.homeTeam} x {game.awayTeam}
+                            {game.homeTeam}{" "}
+                            {typeof game.homeScore === "number"
+                              ? game.homeScore
+                              : "-"}{" "}
+                            x{" "}
+                            {typeof game.awayScore === "number"
+                              ? game.awayScore
+                              : "-"}{" "}
+                            {game.awayTeam}
                           </p>
                         </div>
 
@@ -149,21 +157,6 @@ export default function RecentGames({ games }: RecentGamesProps) {
                           </span>
                         </div>
                       </div>
-
-                      {typeof game.homeScore === "number" &&
-                      typeof game.awayScore === "number" ? (
-                        <div className="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm font-medium">
-                          <span className="min-w-0 leading-tight wrap-anywhere">
-                            {game.homeTeam}
-                          </span>
-                          <span className="shrink-0 rounded-full bg-background/80 px-3 py-1 text-base font-semibold text-primary tabular-nums whitespace-nowrap">
-                            {game.homeScore} x {game.awayScore}
-                          </span>
-                          <span className="min-w-0 text-right leading-tight wrap-anywhere">
-                            {game.awayTeam}
-                          </span>
-                        </div>
-                      ) : null}
                     </div>
                   </CarouselItem>
                 ))}
