@@ -26,8 +26,13 @@ import {
   BET_RESULT_COLORS,
   GAME_STATUS_COLORS,
 } from "@/enums/status-colors";
-import { ApiBetOption, getBetById, updateBetById } from "@/lib/bets";
-import { getBetResultLabel } from "@/lib/bets";
+import {
+  ApiBetOption,
+  getBetById,
+  getBetOptionText as getBetOptionDisplayText,
+  getBetResultLabel,
+  updateBetById,
+} from "@/lib/bets";
 import { formatDateTimeBR } from "@/lib/date-time";
 
 type BetOptionKey = keyof typeof BET_OPTION_LABEL;
@@ -35,15 +40,7 @@ type BetOptionKey = keyof typeof BET_OPTION_LABEL;
 const BET_OPTIONS = Object.keys(BET_OPTION_LABEL) as BetOptionKey[];
 
 function getBetOptionText(option: ApiBetOption, bet: IDataBet): string {
-  if (option === "HOME_WIN") {
-    return `Vitória ${bet.game.homeTeam}`;
-  }
-
-  if (option === "AWAY_WIN") {
-    return `Vitória ${bet.game.awayTeam}`;
-  }
-
-  return BET_OPTION_LABEL[option as BetOptionKey] ?? option;
+  return getBetOptionDisplayText(option, bet.game);
 }
 
 export default function EditBetPage() {
