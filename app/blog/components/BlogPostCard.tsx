@@ -65,6 +65,10 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
   const readingTimeLabel = getReadingTimeLabel(plainText);
 
   const canManagePost = !isLoading && isAdmin;
+  const postHref =
+    canManagePost && !post.published
+      ? `/blog/${post.id}/edit`
+      : `/blog/slug/${post.slug}`;
 
   return (
     <Card className="h-full flex flex-col transition-shadow hover:shadow-lg">
@@ -72,7 +76,7 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="line-clamp-2 leading-snug">
             <Link
-              href={`/blog/slug/${post.slug}`}
+              href={postHref}
               className="hover:underline underline-offset-4"
             >
               {post.title}
@@ -90,7 +94,7 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
         </p>
       </CardHeader>
       <CardContent className="flex-1">
-        <Link href={`/blog/slug/${post.slug}`} className="block">
+        <Link href={postHref} className="block">
           <div className="space-y-3 text-muted-foreground">
             {coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

@@ -32,6 +32,7 @@ interface BlogHighlightProps {
 }
 
 export default function BlogHighlight({ posts }: BlogHighlightProps) {
+  const visiblePosts = posts.filter((post) => post.published);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [snapCount, setSnapCount] = useState(0);
@@ -57,7 +58,7 @@ export default function BlogHighlight({ posts }: BlogHighlightProps) {
   }, [carouselApi]);
 
   useEffect(() => {
-    if (!carouselApi || posts.length <= 1) {
+    if (!carouselApi || visiblePosts.length <= 1) {
       return;
     }
 
@@ -68,7 +69,7 @@ export default function BlogHighlight({ posts }: BlogHighlightProps) {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [carouselApi, posts.length]);
+  }, [carouselApi, visiblePosts.length]);
 
   return (
     <Card className={surfaceCardClassName}>
@@ -93,7 +94,7 @@ export default function BlogHighlight({ posts }: BlogHighlightProps) {
       </CardHeader>
 
       <CardContent>
-        {posts.length === 0 ? (
+        {visiblePosts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nenhum post disponivel.
           </p>
@@ -105,7 +106,7 @@ export default function BlogHighlight({ posts }: BlogHighlightProps) {
               opts={{ loop: true }}
             >
               <CarouselContent>
-                {posts.map((post) => (
+                {visiblePosts.map((post) => (
                   <CarouselItem
                     key={post.id}
                     className="md:basis-1/2 xl:basis-full 2xl:basis-1/2"
