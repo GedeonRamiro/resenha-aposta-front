@@ -97,7 +97,8 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                         </span>
                       </TableCell>
 
-                      <TableCell>{formatDateBR(bet.createdAt)}</TableCell>
+                      {/*    <TableCell>{formatDateBR(bet.createdAt)}</TableCell> */}
+                      <TableCell>{formatDateTimeBR(bet.updatedAt)}</TableCell>
 
                       <TableCell>
                         <BetVisibility
