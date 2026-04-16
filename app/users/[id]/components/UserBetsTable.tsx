@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BET_RESULT_COLORS, GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { GAME_STATUS_LABEL } from "@/enums/game-status";
 import { getBetResultLabel } from "@/lib/bets";
-import { formatDateTimeBR, formatDateBR } from "@/lib/date-time";
+import { formatDateTimeBR } from "@/lib/date-time";
 import { IDataBet } from "@/types/types";
 import { UserBetActions } from "./UserBetActions";
 import { BetVisibility } from "@/app/bets/components/BetVisibility";
@@ -46,9 +46,9 @@ export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
       {grouped.map((group) => (
         <Card key={group.game.id}>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-start justify-between gap-3">
+            <CardTitle className="space-y-1">
               <div className="min-w-0 space-y-1">
-                <div className="text-sm font-semibold">
+                <div className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
                   {group.game.homeTeam}{" "}
                   {typeof group.game.homeScore === "number"
                     ? group.game.homeScore
@@ -62,16 +62,16 @@ export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
                 <p className="text-xs text-muted-foreground">
                   {formatDateTimeBR(group.game.gameDate)}
                 </p>
-              </div>
 
-              <Badge
-                variant="outline"
-                className={`shrink-0 ${GAME_STATUS_COLORS[group.game.status] ?? ""}`}
-              >
-                {GAME_STATUS_LABEL[
-                  group.game.status as keyof typeof GAME_STATUS_LABEL
-                ] ?? group.game.status}
-              </Badge>
+                <Badge
+                  variant="outline"
+                  className={`w-fit shrink-0 ${GAME_STATUS_COLORS[group.game.status] ?? ""}`}
+                >
+                  {GAME_STATUS_LABEL[
+                    group.game.status as keyof typeof GAME_STATUS_LABEL
+                  ] ?? group.game.status}
+                </Badge>
+              </div>
             </CardTitle>
           </CardHeader>
 
@@ -113,18 +113,18 @@ export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
                           </span>
                         )}
                       </div>
-                    </div>
 
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                       <div className="flex flex-col text-xs">
                         <span className="font-medium text-muted-foreground">
                           Data da aposta:
                         </span>
                         <span className="text-foreground">
-                          {formatDateTimeBR(bet.createdAt)}
+                          {formatDateTimeBR(bet.updatedAt)}
                         </span>
                       </div>
+                    </div>
 
+                    <div className="flex flex-col gap-2 sm:items-end">
                       <UserBetActions
                         betId={bet.id}
                         betUserId={bet.userId}
