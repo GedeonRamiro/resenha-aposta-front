@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 
-import PaginationShadcn from "@/components/PaginationShadcn";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getBlogPosts } from "@/lib/blog-posts";
 import { BlogAdminCreateButton } from "./components/BlogAdminCreateButton";
-import BlogPostCard from "./components/BlogPostCard";
+import { BlogPostsSection } from "./components/BlogPostsSection";
 
 export default async function BlogPage({
   searchParams,
@@ -33,9 +32,6 @@ export default async function BlogPage({
         ? error.message
         : "Nao foi possivel carregar os posts do blog.";
   }
-
-  const hasPosts = Boolean(posts && Array.isArray(posts.data));
-  const postsData = posts?.data ?? [];
 
   return (
     <>
@@ -65,35 +61,12 @@ export default async function BlogPage({
         <BlogAdminCreateButton />
       </div>
 
-      {postsError ? <p className="text-sm text-red-600">{postsError}</p> : null}
-
-      {!hasPosts ? (
-        <p className="text-sm text-muted-foreground">
-          Nao foi possivel carregar os dados do blog.
-        </p>
-      ) : postsData.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Nenhum post encontrado para os filtros aplicados.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {postsData.map((post) => (
-            <BlogPostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
-
-      {hasPosts && postsData.length !== 0 ? (
-        <div className="py-4">
-          <PaginationShadcn
-            count={posts?.count}
-            currentPage={currentPage}
-            nextPage={posts?.nextPage}
-            lastPage={posts?.lastPage}
-            prevPage={posts?.prevPage}
-          />
-        </div>
-      ) : null}
+      <BlogPostsSection
+        initialPosts={posts}
+        initialError={postsError}
+        currentPage={currentPage}
+        query={query}
+      />
     </>
   );
 }
