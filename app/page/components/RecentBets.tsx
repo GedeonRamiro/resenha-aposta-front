@@ -16,7 +16,7 @@ import { GAME_STATUS_LABEL } from "@/enums/game-status";
 import { getBetResultLabel } from "@/lib/bets";
 import { cn } from "@/lib/utils";
 import { IDataBet } from "@/types/types";
-import { formatDate, getInitials } from "./utils";
+import { formatDate } from "./utils";
 import { UserAvatar } from "@/components/UserAvatar";
 
 const surfaceCardClassName =
@@ -63,17 +63,23 @@ export default function RecentBets({ bets }: RecentBetsProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      <UserAvatar
-                        name={bet.user.name}
-                        image={bet.user.image}
-                        className="h-7 w-7 shrink-0"
-                      />
-                    </div>
+                    <UserAvatar
+                      name={bet.user.name}
+                      image={bet.user.image}
+                      className="h-8 w-8 shrink-0"
+                    />
                     <div>
                       <p className="font-medium">{bet.user.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {bet.game.homeTeam} x {bet.game.awayTeam}
+                        {bet.game.homeTeam}{" "}
+                        {typeof bet.game.homeScore === "number"
+                          ? bet.game.homeScore
+                          : "-"}{" "}
+                        x{" "}
+                        {typeof bet.game.awayScore === "number"
+                          ? bet.game.awayScore
+                          : "-"}{" "}
+                        {bet.game.awayTeam}
                       </p>
                     </div>
                   </div>
@@ -104,10 +110,11 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                       {betResult}
                     </Badge>
                   ) : null}
-                  <span className="text-xs text-muted-foreground">
-                    Criada em {formatDate(bet.createdAt)}
-                  </span>
                 </div>
+
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Criada em {formatDate(bet.createdAt)}
+                </p>
               </div>
             );
           })
