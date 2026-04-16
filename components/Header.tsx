@@ -16,9 +16,14 @@ export function Header() {
   const user = sessionData?.user;
 
   const handleSignIn = async () => {
+    const callbackURL =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}${window.location.hash}`
+        : "/";
+
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL,
     });
   };
 
