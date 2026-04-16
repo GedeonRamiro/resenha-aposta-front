@@ -1,4 +1,5 @@
-import { IDataBet, IPagination } from "@/types/types";
+import { BET_OPTION_LABEL } from "@/enums/bet-option";
+import { IDataBet, IDataGame, IPagination } from "@/types/types";
 import { getApiBaseUrl } from "@/lib/api-base-url";
 
 export interface BetsApiResponse extends IPagination {
@@ -25,6 +26,21 @@ export type CreateBetPayload = {
 export type UpdateBetPayload = {
   option: ApiBetOption;
 };
+
+export function getBetOptionText(
+  option: string,
+  game: Pick<IDataGame, "homeTeam" | "awayTeam">,
+): string {
+  if (option === "HOME_WIN") {
+    return game.homeTeam;
+  }
+
+  if (option === "AWAY_WIN") {
+    return game.awayTeam;
+  }
+
+  return BET_OPTION_LABEL[option as keyof typeof BET_OPTION_LABEL] ?? option;
+}
 
 export function getBetResultLabel(bet: IDataBet): "GREEN" | "RED" | null {
   if (bet.game.status !== "FINISHED") {

@@ -198,9 +198,9 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
                 <SelectValue placeholder="Selecione a opção" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Vitória {game.homeTeam}</SelectItem>
+                <SelectItem value="1">{game.homeTeam}</SelectItem>
                 <SelectItem value="X">Empate</SelectItem>
-                <SelectItem value="2">Vitória {game.awayTeam}</SelectItem>
+                <SelectItem value="2">{game.awayTeam}</SelectItem>
               </SelectContent>
             </Select>
           </div>

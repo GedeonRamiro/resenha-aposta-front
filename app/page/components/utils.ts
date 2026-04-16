@@ -1,23 +1,13 @@
 import { IDataBet } from "@/types/types";
-import { BET_OPTION_LABEL } from "@/enums/bet-option";
 import { formatDateTimeBR } from "@/lib/date-time";
+import { getBetOptionText } from "@/lib/bets";
 
 export function formatDate(date: string): string {
   return formatDateTimeBR(date);
 }
 
 export function getBetOptionLabel(bet: IDataBet): string {
-  if (bet.option === "HOME_WIN") {
-    return `Vitoria ${bet.game.homeTeam}`;
-  }
-
-  if (bet.option === "AWAY_WIN") {
-    return `Vitoria ${bet.game.awayTeam}`;
-  }
-
-  return (
-    BET_OPTION_LABEL[bet.option as keyof typeof BET_OPTION_LABEL] ?? bet.option
-  );
+  return getBetOptionText(bet.option, bet.game);
 }
 
 export function getExcerpt(content: string, limit = 120): string {
