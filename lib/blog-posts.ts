@@ -46,6 +46,7 @@ export async function getBlogPosts(
     `${getApiBaseUrl()}/blog-posts?${params.toString()}`,
     {
       cache: "no-store",
+      headers: getAuthHeaders(),
     },
   );
 
@@ -59,6 +60,7 @@ export async function getBlogPosts(
 export async function getBlogPostById(postId: string): Promise<IBlogPost> {
   const response = await fetch(`${getApiBaseUrl()}/blog-posts/${postId}`, {
     cache: "no-store",
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -71,6 +73,7 @@ export async function getBlogPostById(postId: string): Promise<IBlogPost> {
 export async function getBlogPostBySlug(slug: string): Promise<IBlogPost> {
   const response = await fetch(`${getApiBaseUrl()}/blog-posts/slug/${slug}`, {
     cache: "no-store",
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
