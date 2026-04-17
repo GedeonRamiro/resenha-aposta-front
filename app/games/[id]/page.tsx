@@ -11,6 +11,7 @@ import { formatDateTimeBR } from "@/lib/date-time";
 import { CreateBetSheet } from "../components/CreateBetSheet";
 import { GameAdminActions } from "../components/GameAdminActions";
 import { GenerateInfoButton } from "../components/GenerateInfoButton";
+import { TeamLogo } from "@/components/TeamLogo";
 
 export default async function GameDetails({
   params,
@@ -56,10 +57,41 @@ export default async function GameDetails({
         <Card className="bg-card shadow-md border-primary border">
           <CardHeader>
             <CardTitle className="text-2xl">
-              {game.homeTeam}{" "}
-              <span className="font-bold text-3xl">{game.homeScore}</span> x{" "}
-              <span className="font-bold text-3xl">{game.awayScore}</span>{" "}
-              {game.awayTeam}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TeamLogo
+                      teamName={game.homeTeam}
+                      logoUrl={game.homeTeamLogo}
+                      className="h-10 w-10"
+                    />
+                    <span className="truncate">{game.homeTeam}</span>
+                  </div>
+
+                  {typeof game.homeScore === "number" ? (
+                    <span className="shrink-0 font-bold text-3xl">
+                      {game.homeScore}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TeamLogo
+                      teamName={game.awayTeam}
+                      logoUrl={game.awayTeamLogo}
+                      className="h-10 w-10"
+                    />
+                    <span className="truncate">{game.awayTeam}</span>
+                  </div>
+
+                  {typeof game.awayScore === "number" ? (
+                    <span className="shrink-0 font-bold text-3xl">
+                      {game.awayScore}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

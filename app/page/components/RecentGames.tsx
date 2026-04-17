@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Trophy } from "lucide-react";
+import { CalendarDays, Lock, Trophy } from "lucide-react";
 
 import {
   CarouselApi,
@@ -26,6 +26,7 @@ import { GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { cn } from "@/lib/utils";
 import { IDataGame } from "@/types/types";
 import { formatDate } from "./utils";
+import { TeamLogo } from "@/components/TeamLogo";
 
 const surfaceCardClassName =
   "border border-primary/25 bg-linear-to-b from-primary/8 via-card to-primary/4 shadow-[0_20px_55px_-44px_rgba(234,88,12,0.55)] ring-primary/20";
@@ -116,20 +117,49 @@ export default function RecentGames({ games }: RecentGamesProps) {
                     <div className="flex h-full flex-col rounded-[1.4rem] border border-primary/15 bg-background/90 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
-                            {game.competition ?? "Partida cadastrada"}
+                          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
+                            <Trophy className="size-3.5 shrink-0" />
+                            <span className="truncate">
+                              {game.competition ?? "Partida cadastrada"}
+                            </span>
                           </p>
-                          <p className="mt-2 text-lg font-semibold leading-snug">
-                            {game.homeTeam}{" "}
-                            {typeof game.homeScore === "number"
-                              ? game.homeScore
-                              : "-"}{" "}
-                            x{" "}
-                            {typeof game.awayScore === "number"
-                              ? game.awayScore
-                              : "-"}{" "}
-                            {game.awayTeam}
-                          </p>
+                          <div className="mt-2 space-y-2 text-lg font-semibold leading-snug">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <TeamLogo
+                                  teamName={game.homeTeam}
+                                  logoUrl={game.homeTeamLogo}
+                                />
+                                <span className="truncate">
+                                  {game.homeTeam}
+                                </span>
+                              </div>
+
+                              {typeof game.homeScore === "number" ? (
+                                <span className="shrink-0">
+                                  {game.homeScore}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <TeamLogo
+                                  teamName={game.awayTeam}
+                                  logoUrl={game.awayTeamLogo}
+                                />
+                                <span className="truncate">
+                                  {game.awayTeam}
+                                </span>
+                              </div>
+
+                              {typeof game.awayScore === "number" ? (
+                                <span className="shrink-0">
+                                  {game.awayScore}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
 
                         <Badge
@@ -151,7 +181,7 @@ export default function RecentGames({ games }: RecentGamesProps) {
                           <span>{formatDate(game.gameDate)}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Trophy className="size-4 text-primary" />
+                          <Lock className="size-4 text-primary" />
                           <span>
                             Mercado fecha em {formatDate(game.betCloseAt)}
                           </span>

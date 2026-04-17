@@ -42,6 +42,8 @@ export default function EditGame() {
         setInitialData({
           homeTeam: data.homeTeam,
           awayTeam: data.awayTeam,
+          homeTeamLogo: data.homeTeamLogo ?? undefined,
+          awayTeamLogo: data.awayTeamLogo ?? undefined,
           competition: data.competition ?? undefined,
           gameDate: formatDateTimeLocal(data.gameDate),
           betCloseAt: formatDateTimeLocal(data.betCloseAt),

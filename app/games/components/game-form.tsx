@@ -29,6 +29,8 @@ import { GAME_STATUS_LABEL, GameStatus } from "@/enums/game-status";
 const schema = z.object({
   homeTeam: z.string().min(3),
   awayTeam: z.string().min(3),
+  homeTeamLogo: z.union([z.string().url(), z.literal(""), z.undefined()]),
+  awayTeamLogo: z.union([z.string().url(), z.literal(""), z.undefined()]),
   competition: z.string().optional(),
   gameDate: z.string().min(1),
   betCloseAt: z.string().min(1),
@@ -54,6 +56,8 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     defaultValues: {
       homeTeam: initialData?.homeTeam ?? "",
       awayTeam: initialData?.awayTeam ?? "",
+      homeTeamLogo: initialData?.homeTeamLogo ?? "",
+      awayTeamLogo: initialData?.awayTeamLogo ?? "",
       competition: initialData?.competition ?? "",
       gameDate: initialData?.gameDate ?? "",
       betCloseAt: initialData?.betCloseAt ?? "",
@@ -111,6 +115,44 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     <FormControl>
                       <Input
                         placeholder="Ex: Flamengo"
+                        disabled={isBusy}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="homeTeamLogo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo do Time da Casa (URL)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://..."
+                        disabled={isBusy}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="awayTeamLogo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo do Time Visitante (URL)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://..."
                         disabled={isBusy}
                         {...field}
                       />

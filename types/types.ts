@@ -1,12 +1,14 @@
 export interface IDataGame {
   awayScore: number | null;
   awayTeam: string;
+  awayTeamLogo: string | null;
   betCloseAt: string;
   competition: string | null;
   createdAt: string;
   gameDate: string;
   homeScore: number | null;
   homeTeam: string;
+  homeTeamLogo: string | null;
   id: string;
   moreInfo: string | null;
   status: string;

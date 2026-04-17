@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createBet, getBetsByUser, type UserBetSummary } from "@/lib/bets";
+import {
+  createBet,
+  getBetsByUser,
+  updateBetById,
+  type UserBetSummary,
+} from "@/lib/bets";
 import { useBackendUser } from "@/lib/useBackendUser";
 import { IDataGame } from "@/types/types";
 
@@ -34,6 +39,12 @@ const UI_TO_API_OPTION = {
   "1": "HOME_WIN",
   X: "DRAW",
   "2": "AWAY_WIN",
+} as const;
+
+const API_TO_UI_OPTION = {
+  HOME_WIN: "1",
+  DRAW: "X",
+  AWAY_WIN: "2",
 } as const;
 
 const userBetsCache = new Map<string, UserBetSummary[]>();
@@ -85,8 +96,12 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
         const userBets = await getCachedUserBets(backendUser.id);
         const existingBet = userBets.find((bet) => bet.gameId === game.id);
         setExistingBetId(existingBet?.id ?? null);
+        setSelectedOption(
+          existingBet ? API_TO_UI_OPTION[existingBet.option] : "",
+        );
       } catch {
         setExistingBetId(null);
+        setSelectedOption("");
       } finally {
         setIsCheckingExistingBet(false);
       }
@@ -111,11 +126,6 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       return;
     }
 
-    if (existingBetId) {
-      router.push(`/bets/${existingBetId}`);
-      return;
-    }
-
     if (!selectedOption) {
       toast.error("Selecione uma opção");
       return;
@@ -125,65 +135,92 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
 
     setLoading(true);
     try {
-      const createdBet = await createBet({
-        userId: backendUser.id,
-        gameId: game.id,
-        option,
-      });
+      if (existingBetId) {
+        await updateBetById(existingBetId, { option });
 
-      const cachedUserBets = userBetsCache.get(backendUser.id) ?? [];
-      userBetsCache.set(backendUser.id, [
-        ...cachedUserBets,
-        {
-          id: createdBet.id,
-          userId: createdBet.userId,
-          gameId: createdBet.gameId,
-          option: createdBet.option as typeof option,
-          createdAt: createdBet.createdAt,
-          updatedAt: createdBet.updatedAt,
-        },
-      ]);
-      setExistingBetId(createdBet.id);
+        const cachedUserBets = userBetsCache.get(backendUser.id) ?? [];
+        userBetsCache.set(
+          backendUser.id,
+          cachedUserBets.map((bet) =>
+            bet.id === existingBetId
+              ? {
+                  ...bet,
+                  option,
+                  updatedAt: new Date().toISOString(),
+                }
+              : bet,
+          ),
+        );
 
-      toast.success("Aposta criada com sucesso!");
+        toast.success("Aposta atualizada com sucesso!");
+      } else {
+        const createdBet = await createBet({
+          userId: backendUser.id,
+          gameId: game.id,
+          option,
+        });
+
+        const cachedUserBets = userBetsCache.get(backendUser.id) ?? [];
+        userBetsCache.set(backendUser.id, [
+          ...cachedUserBets,
+          {
+            id: createdBet.id,
+            userId: createdBet.userId,
+            gameId: createdBet.gameId,
+            option: createdBet.option,
+            createdAt: createdBet.createdAt,
+            updatedAt: createdBet.updatedAt,
+          },
+        ]);
+        setExistingBetId(createdBet.id);
+
+        toast.success("Aposta criada com sucesso!");
+      }
+
       setOpen(false);
-      setSelectedOption("");
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Erro ao criar aposta",
+        error instanceof Error
+          ? error.message
+          : existingBetId
+            ? "Erro ao atualizar aposta"
+            : "Erro ao criar aposta",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  if (existingBetId) {
-    return (
-      <Button
-        variant="secondary"
-        className="w-full border border-orange-500/35 bg-orange-500/12 text-orange-700 hover:bg-orange-500/18"
-        disabled={isLoading || isCheckingExistingBet}
-        onClick={() => router.push(`/bets/${existingBetId}`)}
-      >
-        <Pencil className="size-4" />
-        {isCheckingExistingBet ? "Verificando..." : "Editar Aposta"}
-      </Button>
-    );
-  }
-
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="w-full " disabled={isCheckingExistingBet}>
-          {isCheckingExistingBet ? "Verificando..." : "Fazer Aposta"}
+        <Button
+          variant={existingBetId ? "secondary" : "default"}
+          className={
+            existingBetId
+              ? "w-full border border-orange-500/35 bg-orange-500/12 text-orange-700 hover:bg-orange-500/18"
+              : "w-full"
+          }
+          disabled={isCheckingExistingBet || isLoading}
+        >
+          {existingBetId ? <Pencil className="size-4" /> : null}
+          {isCheckingExistingBet
+            ? "Verificando..."
+            : existingBetId
+              ? "Editar Aposta"
+              : "Fazer Aposta"}
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom">
         <SheetHeader>
-          <SheetTitle>Fazer Aposta</SheetTitle>
+          <SheetTitle>
+            {existingBetId ? "Editar Aposta" : "Fazer Aposta"}
+          </SheetTitle>
           <SheetDescription>
-            Escolha sua opção para {game.homeTeam} x {game.awayTeam}
+            {existingBetId
+              ? `Atualize sua opção para ${game.homeTeam} x ${game.awayTeam}`
+              : `Escolha sua opção para ${game.homeTeam} x ${game.awayTeam}`}
           </SheetDescription>
         </SheetHeader>
 
@@ -216,7 +253,13 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
             }
             className="w-full"
           >
-            {loading ? "Criando..." : "Confirmar Aposta"}
+            {loading
+              ? existingBetId
+                ? "Salvando..."
+                : "Criando..."
+              : existingBetId
+                ? "Salvar Alterações"
+                : "Confirmar Aposta"}
           </Button>
         </div>
       </SheetContent>

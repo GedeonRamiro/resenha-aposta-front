@@ -8,6 +8,8 @@ export interface GamesApiResponse extends IPagination {
 export type GamePayload = {
   homeTeam: string;
   awayTeam: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
   competition?: string;
   gameDate: string;
   betCloseAt: string;
@@ -21,6 +23,8 @@ type CreateGamePayload = Pick<
   GamePayload,
   | "homeTeam"
   | "awayTeam"
+  | "homeTeamLogo"
+  | "awayTeamLogo"
   | "competition"
   | "gameDate"
   | "betCloseAt"
@@ -59,10 +63,14 @@ function getAuthHeaders(): HeadersInit {
 function sanitizeCreateGamePayload(payload: GamePayload): CreateGamePayload {
   const competition = payload.competition?.trim();
   const moreInfo = payload.moreInfo?.trim();
+  const homeTeamLogo = payload.homeTeamLogo?.trim();
+  const awayTeamLogo = payload.awayTeamLogo?.trim();
 
   return {
     homeTeam: payload.homeTeam,
     awayTeam: payload.awayTeam,
+    homeTeamLogo: homeTeamLogo ? homeTeamLogo : undefined,
+    awayTeamLogo: awayTeamLogo ? awayTeamLogo : undefined,
     gameDate: toApiIsoDateTime(payload.gameDate, "Data do jogo"),
     betCloseAt: toApiIsoDateTime(payload.betCloseAt, "Data de fechamento"),
     competition: competition ? competition : undefined,
@@ -89,6 +97,16 @@ function sanitizeUpdateGamePayload(
       payload.betCloseAt,
       "Data de fechamento",
     );
+  }
+
+  if (typeof payload.homeTeamLogo === "string") {
+    const homeTeamLogo = payload.homeTeamLogo.trim();
+    sanitizedPayload.homeTeamLogo = homeTeamLogo ? homeTeamLogo : undefined;
+  }
+
+  if (typeof payload.awayTeamLogo === "string") {
+    const awayTeamLogo = payload.awayTeamLogo.trim();
+    sanitizedPayload.awayTeamLogo = awayTeamLogo ? awayTeamLogo : undefined;
   }
 
   return sanitizedPayload;
