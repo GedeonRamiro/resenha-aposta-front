@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
+  type ApiBetOption,
   createBet,
   getBetsByUser,
   updateBetById,
@@ -167,7 +168,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
             id: createdBet.id,
             userId: createdBet.userId,
             gameId: createdBet.gameId,
-            option: createdBet.option,
+            option: createdBet.option as ApiBetOption,
             createdAt: createdBet.createdAt,
             updatedAt: createdBet.updatedAt,
           },
