@@ -115,64 +115,41 @@ export default function RecentGames({ games }: RecentGamesProps) {
                     className="md:basis-1/2 xl:basis-full 2xl:basis-1/2"
                   >
                     <div className="flex h-full flex-col rounded-[1.4rem] border border-primary/15 bg-background/90 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
-                            <Trophy className="size-3.5 shrink-0" />
-                            <span className="truncate">
-                              {game.competition ?? "Partida cadastrada"}
-                            </span>
-                          </p>
-                          <div className="mt-2 space-y-2 text-lg font-semibold leading-snug">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex min-w-0 items-center gap-2">
-                                <TeamLogo
-                                  teamName={game.homeTeam}
-                                  logoUrl={game.homeTeamLogo}
-                                />
-                                <span className="truncate">
-                                  {game.homeTeam}
-                                </span>
-                              </div>
+                      <p className="flex items-start gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
+                        <Trophy className="mt-0.5 size-3.5 shrink-0" />
+                        <span className="whitespace-normal wrap-break-word leading-relaxed">
+                          {game.competition ?? "Partida cadastrada"}
+                        </span>
+                      </p>
 
-                              {typeof game.homeScore === "number" ? (
-                                <span className="shrink-0">
-                                  {game.homeScore}
-                                </span>
-                              ) : null}
-                            </div>
-
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex min-w-0 items-center gap-2">
-                                <TeamLogo
-                                  teamName={game.awayTeam}
-                                  logoUrl={game.awayTeamLogo}
-                                />
-                                <span className="truncate">
-                                  {game.awayTeam}
-                                </span>
-                              </div>
-
-                              {typeof game.awayScore === "number" ? (
-                                <span className="shrink-0">
-                                  {game.awayScore}
-                                </span>
-                              ) : null}
-                            </div>
+                      <div className="mt-2 space-y-2 text-lg font-semibold leading-snug">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <TeamLogo
+                              teamName={game.homeTeam}
+                              logoUrl={game.homeTeamLogo}
+                            />
+                            <span className="truncate">{game.homeTeam}</span>
                           </div>
+
+                          {typeof game.homeScore === "number" ? (
+                            <span className="shrink-0">{game.homeScore}</span>
+                          ) : null}
                         </div>
 
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "rounded-full border px-3 py-1 text-[11px] font-semibold",
-                            GAME_STATUS_COLORS[game.status] ?? "",
-                          )}
-                        >
-                          {GAME_STATUS_LABEL[
-                            game.status as keyof typeof GAME_STATUS_LABEL
-                          ] ?? game.status}
-                        </Badge>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <TeamLogo
+                              teamName={game.awayTeam}
+                              logoUrl={game.awayTeamLogo}
+                            />
+                            <span className="truncate">{game.awayTeam}</span>
+                          </div>
+
+                          {typeof game.awayScore === "number" ? (
+                            <span className="shrink-0">{game.awayScore}</span>
+                          ) : null}
+                        </div>
                       </div>
 
                       <div className="mt-6 space-y-3 text-sm text-muted-foreground">
@@ -186,6 +163,17 @@ export default function RecentGames({ games }: RecentGamesProps) {
                             Mercado fecha em {formatDate(game.betCloseAt)}
                           </span>
                         </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "w-fit rounded-full border px-3 py-1 text-[11px] font-semibold",
+                            GAME_STATUS_COLORS[game.status] ?? "",
+                          )}
+                        >
+                          {GAME_STATUS_LABEL[
+                            game.status as keyof typeof GAME_STATUS_LABEL
+                          ] ?? game.status}
+                        </Badge>
                       </div>
                     </div>
                   </CarouselItem>
