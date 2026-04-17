@@ -59,33 +59,32 @@ export default async function Games({
         {games.data.map((game) => (
           <Card key={game.id} className={surfaceCardClassName}>
             <CardHeader className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2">
                 {game.competition ? (
-                  <p className="flex min-w-0 items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
-                    <Trophy className="size-3.5 shrink-0" />
-                    <span className="truncate">{game.competition}</span>
+                  <p className="flex min-w-0 items-start gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
+                    <Trophy className="mt-0.5 size-3.5 shrink-0" />
+                    <span className="whitespace-normal wrap-break-word leading-relaxed">
+                      {game.competition}
+                    </span>
                   </p>
                 ) : (
                   <div />
                 )}
-
-                <div className="shrink-0">
-                  <GameInfoModalAction
-                    gameId={game.id}
-                    initialInfo={game.moreInfo}
-                  />
-                </div>
+                <GameInfoModalAction
+                  gameId={game.id}
+                  initialInfo={game.moreInfo}
+                />
               </div>
 
               <CardTitle className="mt-1">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <TeamLogo
                         teamName={game.homeTeam}
                         logoUrl={game.homeTeamLogo}
                       />
-                      <span className="truncate">{game.homeTeam}</span>
+                      <span className="block truncate">{game.homeTeam}</span>
                     </div>
 
                     {typeof game.homeScore === "number" ? (
@@ -96,12 +95,12 @@ export default async function Games({
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <TeamLogo
                         teamName={game.awayTeam}
                         logoUrl={game.awayTeamLogo}
                       />
-                      <span className="truncate">{game.awayTeam}</span>
+                      <span className="block truncate">{game.awayTeam}</span>
                     </div>
 
                     {typeof game.awayScore === "number" ? (
@@ -155,7 +154,7 @@ export default async function Games({
                   <CreateBetSheet game={game} />
                 </div>
               )}
-              <div className="flex justify-end mt-4">
+              <div className="mt-4 flex items-center justify-end gap-2">
                 <GameAdminActions gameId={game.id} />
               </div>
             </CardContent>

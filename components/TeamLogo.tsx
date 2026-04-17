@@ -30,7 +30,10 @@ export function TeamLogo({ teamName, logoUrl, className }: TeamLogoProps) {
       <img
         src={safeLogoUrl}
         alt={`Logo do ${teamName}`}
-        className={cn("h-8 w-8 shrink-0 rounded-full object-cover", className)}
+        className={cn(
+          "h-8 w-8 shrink-0 rounded-full object-contain",
+          className,
+        )}
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setHasLoadError(true)}

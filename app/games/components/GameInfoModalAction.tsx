@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { Edit2, Loader2 } from "lucide-react";
+import { Edit2, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -63,7 +63,9 @@ export function GameInfoModalAction({
           type="button"
           size="sm"
           variant="outline"
-          className="h-8 gap-1.5 text-xs opacity-85 hover:opacity-100"
+          className="h-7 border-muted-foreground/30 px-2 text-[11px] font-medium text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
+          aria-label="Ver informações do jogo"
+          title="Informações do jogo"
         >
           +Info
         </Button>
