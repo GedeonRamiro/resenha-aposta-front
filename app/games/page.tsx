@@ -79,7 +79,7 @@ export default async function Games({
               <CardTitle className="mt-1">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                       <TeamLogo
                         teamName={game.homeTeam}
                         logoUrl={game.homeTeamLogo}
@@ -88,14 +88,14 @@ export default async function Games({
                     </div>
 
                     {typeof game.homeScore === "number" ? (
-                      <span className="shrink-0 font-bold">
+                      <span className="shrink-0 font-bold text-sm">
                         {game.homeScore}
                       </span>
                     ) : null}
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                       <TeamLogo
                         teamName={game.awayTeam}
                         logoUrl={game.awayTeamLogo}
@@ -104,7 +104,7 @@ export default async function Games({
                     </div>
 
                     {typeof game.awayScore === "number" ? (
-                      <span className="shrink-0 font-bold">
+                      <span className="shrink-0 font-bold text-sm">
                         {game.awayScore}
                       </span>
                     ) : null}

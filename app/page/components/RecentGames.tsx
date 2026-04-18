@@ -122,7 +122,7 @@ export default function RecentGames({ games }: RecentGamesProps) {
                         </span>
                       </p>
 
-                      <div className="mt-2 space-y-2 text-lg font-semibold leading-snug">
+                      <div className="mt-2 space-y-2 text-sm font-semibold leading-snug">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
                             <TeamLogo

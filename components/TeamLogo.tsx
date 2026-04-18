@@ -31,7 +31,7 @@ export function TeamLogo({ teamName, logoUrl, className }: TeamLogoProps) {
         src={safeLogoUrl}
         alt={`Logo do ${teamName}`}
         className={cn(
-          "h-8 w-8 shrink-0 rounded-full object-contain",
+          "h-6 w-6 shrink-0 rounded-full object-contain",
           className,
         )}
         loading="lazy"
