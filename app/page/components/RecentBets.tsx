@@ -74,11 +74,11 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                         {bet.game.homeTeam}{" "}
                         {typeof bet.game.homeScore === "number"
                           ? bet.game.homeScore
-                          : "-"}{" "}
+                          : ""}{" "}
                         x{" "}
                         {typeof bet.game.awayScore === "number"
                           ? bet.game.awayScore
-                          : "-"}{" "}
+                          : ""}{" "}
                         {bet.game.awayTeam}
                       </p>
                     </div>
