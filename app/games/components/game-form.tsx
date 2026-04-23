@@ -26,20 +26,32 @@ import {
 } from "@/components/ui/select";
 import { GAME_STATUS_LABEL, GameStatus } from "@/enums/game-status";
 
+const optionalLogoUrl = (message: string) =>
+  z.string().url(message).or(z.literal("")).optional();
+
 const schema = z.object({
-  homeTeam: z.string().min(3),
-  awayTeam: z.string().min(3),
-  homeTeamLogo: z.union([z.string().url(), z.literal(""), z.undefined()]),
-  awayTeamLogo: z.union([z.string().url(), z.literal(""), z.undefined()]),
-  competition: z.string().optional(),
-  gameDate: z.string().min(1),
-  betCloseAt: z.string().min(1),
+  homeTeam: z
+    .string()
+    .trim()
+    .min(3, "Nome do time da casa deve ter ao menos 3 caracteres"),
+  awayTeam: z
+    .string()
+    .trim()
+    .min(3, "Nome do time visitante deve ter ao menos 3 caracteres"),
+  homeTeamLogo: optionalLogoUrl("URL inválida para o logo do time da casa"),
+  awayTeamLogo: optionalLogoUrl("URL inválida para o logo do time visitante"),
+  competition: z.string().trim().min(1, "Liga/Campeonato é obrigatório"),
+  gameDate: z.string().trim().min(1, "Data do jogo é obrigatória"),
+  betCloseAt: z
+    .string()
+    .trim()
+    .min(1, "Data de fechamento das apostas é obrigatória"),
   moreInfo: z.string().optional(),
 
   status: z.nativeEnum(GameStatus).optional(),
 
-  homeScore: z.number().optional(),
-  awayScore: z.number().optional(),
+  homeScore: z.number({ error: "Placar deve ser um número" }).optional(),
+  awayScore: z.number({ error: "Placar deve ser um número" }).optional(),
 });
 
 export type GameFormValues = z.infer<typeof schema>;
@@ -53,6 +65,7 @@ type GameFormProps = {
 export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
   const form = useForm<GameFormValues>({
     resolver: zodResolver(schema),
+    mode: "onTouched",
     defaultValues: {
       homeTeam: initialData?.homeTeam ?? "",
       awayTeam: initialData?.awayTeam ?? "",
@@ -168,7 +181,9 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               name="competition"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Liga/Campeonato</FormLabel>
+                  <FormLabel>
+                    Liga/Campeonato <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Ex: Brasileirão Série A"
