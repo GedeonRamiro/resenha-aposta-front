@@ -12,10 +12,8 @@ import { getGameById, updateGameById } from "@/lib/games";
 import { GameStatus } from "@/enums/game-status";
 
 export default function EditGame() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-
-  const gameId = Array.isArray(id) ? id[0] : id;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingInitial, setIsFetchingInitial] = useState(true);
@@ -32,13 +30,13 @@ export default function EditGame() {
 
   useEffect(() => {
     async function fetchGame() {
-      if (!gameId) {
+      if (!id) {
         setIsFetchingInitial(false);
         return;
       }
 
       try {
-        const data = await getGameById(gameId);
+        const data = await getGameById(id);
         setInitialData({
           homeTeam: data.homeTeam,
           awayTeam: data.awayTeam,
@@ -60,15 +58,15 @@ export default function EditGame() {
     }
 
     fetchGame();
-  }, [gameId]);
+  }, [id]);
 
   async function onSubmit(data: GameFormValues) {
-    if (!gameId || submittingRef.current || isSubmitting) return;
+    if (!id || submittingRef.current || isSubmitting) return;
 
     try {
       submittingRef.current = true;
       setIsSubmitting(true);
-      await updateGameById(gameId, data);
+      await updateGameById(id, data);
       toast.success("Jogo atualizado!");
       router.push("/games");
     } catch {
