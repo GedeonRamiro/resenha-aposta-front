@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
@@ -47,7 +48,9 @@ export default function RootLayout({
         <ThemeProvider>
           <Header />
           <div className="flex flex-1 min-h-0 pt-16">
-            <Sidebar />
+            <Suspense fallback={null}>
+              <Sidebar />
+            </Suspense>
             <main className="flex-1 min-h-screen md:ml-64 p-6 overflow-x-hidden bg-linear-to-b from-primary/10 via-background to-primary/6">
               {children}
             </main>
