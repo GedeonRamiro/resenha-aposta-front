@@ -1,7 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSidebarStore } from "@/components/sidebar-store";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useBackendUser } from "@/lib/useBackendUser";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ import {
   FiBarChart2,
 } from "react-icons/fi";
 import { FaRegFutbol } from "react-icons/fa6";
+import { ChevronDown } from "lucide-react";
 
 const menuItems = [
   { label: "Início", href: "/", icon: <FiHome /> },
@@ -34,13 +36,38 @@ const menuItems = [
   },
   { label: "Apostadores", href: "/users", icon: <FiUsers /> },
   { label: "Blog", href: "/blog", icon: <FiBookOpen />, admin: true },
-  { label: "Ranking", href: "/user-scores", icon: <FiTable /> },
+  {
+    label: "Ranking",
+    href: "/user-scores",
+    icon: <FiTable />,
+    subItems: [
+      { label: "Geral", href: "/user-scores?period=geral" },
+      {
+        label: "Abril",
+        href: "/user-scores?period=abril&startDate=2026-04-03&endDate=2026-04-26",
+      },
+      {
+        label: "Maio",
+        href: "/user-scores?period=maio&startDate=2026-05-01&endDate=2026-05-25",
+      },
+    ],
+  },
 ];
 
 export function Sidebar() {
   const { open, closeSidebar } = useSidebarStore();
   const { isAuthenticated } = useBackendUser();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentPeriod = searchParams.get("period") || "";
+  const isRankingRoute = pathname.startsWith("/user-scores");
+  const [isRankingOpen, setIsRankingOpen] = useState(isRankingRoute);
+
+  useEffect(() => {
+    if (isRankingRoute) {
+      setIsRankingOpen(true);
+    }
+  }, [isRankingRoute]);
 
   return (
     <>
@@ -65,6 +92,76 @@ export function Sidebar() {
                 return null;
               }
 
+              const isParentActive =
+                item.href === "/user-scores"
+                  ? pathname.startsWith("/user-scores")
+                  : pathname === item.href;
+
+              if (item.href === "/user-scores" && item.subItems) {
+                return (
+                  <div key={item.href}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-between rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                        isParentActive
+                          ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                          : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                      )}
+                      onClick={() => setIsRankingOpen((current) => !current)}
+                    >
+                      <span className="flex items-center gap-3">
+                        {item.icon}
+                        {item.label}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 transition-transform duration-200",
+                          isRankingOpen ? "rotate-180" : "rotate-0",
+                        )}
+                      />
+                    </Button>
+
+                    <div
+                      className={cn(
+                        "ml-6 mt-2 overflow-hidden border-l border-primary/20 pl-3 transition-all duration-200",
+                        isRankingOpen
+                          ? "max-h-40 opacity-100"
+                          : "max-h-0 opacity-0",
+                      )}
+                    >
+                      <div className="flex flex-col gap-1 py-1">
+                        {item.subItems.map((subItem) => {
+                          const isCurrentSubItem = subItem.href.includes(
+                            `period=${currentPeriod}`,
+                          );
+
+                          return (
+                            <Link
+                              key={subItem.href}
+                              href={subItem.href}
+                              onClick={closeSidebar}
+                              aria-current={
+                                isCurrentSubItem ? "page" : undefined
+                              }
+                              className={cn(
+                                "rounded-md px-2 py-1.5 text-xs transition-colors",
+                                isCurrentSubItem
+                                  ? "bg-primary/15 text-primary"
+                                  : "text-muted-foreground hover:bg-primary/8 hover:text-foreground",
+                              )}
+                            >
+                              {subItem.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div key={item.href}>
                   <Button
@@ -72,7 +169,7 @@ export function Sidebar() {
                     variant="ghost"
                     className={cn(
                       "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
-                      pathname === item.href
+                      isParentActive
                         ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
                         : "border-transparent hover:border-primary/20 hover:bg-primary/10",
                     )}
