@@ -17,18 +17,15 @@ export default async function UserScoresPage({
   }>;
 }) {
   const params = await searchParams;
-  const { period, startDate, endDate } = params;
-  const hasSelectedFilter = Boolean(period || startDate || endDate);
+  const { startDate, endDate } = params;
 
   let ranking: Awaited<ReturnType<typeof getUserScores>> | null = null;
   let error = "";
 
-  if (hasSelectedFilter) {
-    try {
-      ranking = await getUserScores(startDate, endDate);
-    } catch {
-      error = "Não foi possível carregar o ranking.";
-    }
+  try {
+    ranking = await getUserScores(startDate, endDate);
+  } catch {
+    error = "Não foi possível carregar o ranking.";
   }
 
   const hasData = ranking && ranking.length > 0;
@@ -44,11 +41,7 @@ export default async function UserScoresPage({
         </div>
       </div>
 
-      {!hasSelectedFilter ? (
-        <p className="text-sm text-muted-foreground text-center">
-          Selecione um período para carregar o ranking.
-        </p>
-      ) : error ? (
+      {error ? (
         <p className="text-sm text-red-600">{error}</p>
       ) : !hasData ? (
         <p className="text-sm text-muted-foreground text-center">
