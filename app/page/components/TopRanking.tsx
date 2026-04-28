@@ -56,7 +56,7 @@ export default function TopRanking({ ranking }: TopRankingProps) {
       </CardContent>
       <CardFooter>
         <Button asChild variant="outline" className="w-full border-primary/15">
-          <Link href="/user-scores">Ver ranking completo</Link>
+          <Link href="/user-scores?period=geral">Ver ranking completo</Link>
         </Button>
       </CardFooter>
     </Card>
