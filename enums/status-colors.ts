@@ -16,3 +16,8 @@ export const BET_RESULT_COLORS: Record<string, string> = {
   GREEN: "text-green-700 border-green-700/30 bg-green-700/10",
   RED: "text-red-700 border-red-700/30 bg-red-700/10",
 };
+
+export const BET_RESULT_BORDER_L_COLORS: Record<string, string> = {
+  GREEN: "border-l-green-600",
+  RED: "border-l-red-600",
+};
