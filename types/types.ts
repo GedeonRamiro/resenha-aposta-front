@@ -60,6 +60,7 @@ export interface IUserScore {
 
 export interface IPagination {
   count: number;
+  totalBets?: number;
   currentPage: number;
   nextPage: number | null;
   lastPage: number | null;

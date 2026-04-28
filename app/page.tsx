@@ -34,7 +34,7 @@ export default async function Home() {
     <div className="space-y-8 pb-6">
       <HeroSection
         gamesCount={games?.count ?? 0}
-        betsCount={bets?.count ?? 0}
+        betsCount={bets?.totalBets ?? 0}
         rankingCount={ranking?.length ?? 0}
         postsCount={posts?.count ?? 0}
       />
