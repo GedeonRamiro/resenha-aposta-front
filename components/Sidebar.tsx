@@ -59,7 +59,7 @@ export function Sidebar() {
   const { isAuthenticated } = useBackendUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentPeriod = searchParams.get("period") || "";
+  const currentPeriod = searchParams.get("period") || "geral";
   const isRankingRoute = pathname.startsWith("/user-scores");
   const [isRankingOpen, setIsRankingOpen] = useState(isRankingRoute);
 
@@ -133,9 +133,9 @@ export function Sidebar() {
                     >
                       <div className="flex flex-col gap-1 py-1">
                         {item.subItems.map((subItem) => {
-                          const isCurrentSubItem = subItem.href.includes(
-                            `period=${currentPeriod}`,
-                          );
+                          const isCurrentSubItem =
+                            pathname.startsWith("/user-scores") &&
+                            subItem.href.includes(`period=${currentPeriod}`);
 
                           return (
                             <Link
