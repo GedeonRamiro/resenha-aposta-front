@@ -12,10 +12,12 @@ import { getBlogPostById, updateBlogPost } from "@/lib/blog-posts";
 import BlogPostForm, {
   BlogPostFormValues,
 } from "../../components/BlogPostForm";
+import { useBackendUser } from "@/lib/useBackendUser";
 
 export default function EditBlogPostPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { isAdmin, isLoading: isAuthLoading } = useBackendUser();
 
   const postId = Array.isArray(id) ? id[0] : id;
 
@@ -26,6 +28,12 @@ export default function EditBlogPostPage() {
   const submittingRef = useRef(false);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAdmin) router.replace("/blog");
+  }, [isAdmin, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthLoading || !isAdmin) return;
     async function fetchPost() {
       if (!postId) {
         setIsFetchingInitial(false);
@@ -47,7 +55,9 @@ export default function EditBlogPostPage() {
     }
 
     fetchPost();
-  }, [postId]);
+  }, [postId, isAdmin, isAuthLoading]);
+
+  if (isAuthLoading || !isAdmin) return null;
 
   async function onSubmit(values: BlogPostFormValues) {
     if (!postId || submittingRef.current || loading) return;

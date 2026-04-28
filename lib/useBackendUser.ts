@@ -19,6 +19,7 @@ export function useBackendUser() {
   const { data: sessionData, isPending } = authClient.useSession();
   const [backendUser, setBackendUser] = useState<IDataUser | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasSyncAttempted, setHasSyncAttempted] = useState(false);
 
   const session = sessionData?.session;
   const user = sessionData?.user;
@@ -28,6 +29,7 @@ export function useBackendUser() {
 
     if (!apiUrl || !session?.id || !user?.email) {
       setBackendUser(null);
+      setHasSyncAttempted(true);
       return;
     }
 
@@ -38,6 +40,7 @@ export function useBackendUser() {
 
     if (cachedUser && hasBackendToken) {
       setBackendUser(cachedUser);
+      setHasSyncAttempted(true);
       return;
     }
 
@@ -76,6 +79,7 @@ export function useBackendUser() {
         setBackendUser(null);
       } finally {
         setIsSyncing(false);
+        setHasSyncAttempted(true);
       }
     };
 
@@ -88,7 +92,7 @@ export function useBackendUser() {
 
   return {
     backendUser,
-    isLoading: isPending || isSyncing,
+    isLoading: isPending || isSyncing || !hasSyncAttempted,
     isAuthenticated: Boolean(user),
     isAdmin,
     isModerator,

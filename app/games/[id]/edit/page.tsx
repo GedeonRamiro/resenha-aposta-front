@@ -10,16 +10,23 @@ import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { getGameById, updateGameById } from "@/lib/games";
 import { GameStatus } from "@/enums/game-status";
+import { useBackendUser } from "@/lib/useBackendUser";
 
 export default function EditGame() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { canManageGames, isLoading: isAuthLoading } = useBackendUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingInitial, setIsFetchingInitial] = useState(true);
   const [initialData, setInitialData] =
     useState<Partial<GameFormValues> | null>(null);
   const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!canManageGames) router.replace("/games");
+  }, [canManageGames, isAuthLoading, router]);
 
   function formatDateTimeLocal(date: string): string {
     if (!date) return "";
@@ -29,6 +36,7 @@ export default function EditGame() {
   }
 
   useEffect(() => {
+    if (isAuthLoading || !canManageGames) return;
     async function fetchGame() {
       if (!id) {
         setIsFetchingInitial(false);
@@ -58,7 +66,9 @@ export default function EditGame() {
     }
 
     fetchGame();
-  }, [id]);
+  }, [id, canManageGames, isAuthLoading]);
+
+  if (isAuthLoading || !canManageGames) return null;
 
   async function onSubmit(data: GameFormValues) {
     if (!id || submittingRef.current || isSubmitting) return;

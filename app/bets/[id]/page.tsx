@@ -34,6 +34,7 @@ import {
   updateBetById,
 } from "@/lib/bets";
 import { formatDateTimeBR } from "@/lib/date-time";
+import { useBackendUser } from "@/lib/useBackendUser";
 
 type BetOptionKey = keyof typeof BET_OPTION_LABEL;
 
@@ -46,6 +47,7 @@ function getBetOptionText(option: ApiBetOption, bet: IDataBet): string {
 export default function EditBetPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useBackendUser();
 
   const betId = params?.id;
 
@@ -56,6 +58,11 @@ export default function EditBetPage() {
 
   const isMarketOpen = bet?.game.status === "SCHEDULED";
   const betResult = bet ? getBetResultLabel(bet) : null;
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) router.replace("/bets");
+  }, [isAuthenticated, isAuthLoading, router]);
 
   useEffect(() => {
     async function fetchBet() {

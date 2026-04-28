@@ -1,17 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import TiTleSeparator from "@/components/TiTleSeparator";
 import { createBlogPost } from "@/lib/blog-posts";
 import BlogPostForm, { BlogPostFormValues } from "../components/BlogPostForm";
+import { useBackendUser } from "@/lib/useBackendUser";
 
 export default function CreateBlogPostPage() {
   const router = useRouter();
+  const { isAdmin, isLoading } = useBackendUser();
   const [loading, setLoading] = useState(false);
   const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAdmin) router.replace("/blog");
+  }, [isAdmin, isLoading, router]);
+
+  if (isLoading || !isAdmin) return null;
 
   async function onSubmit(values: BlogPostFormValues) {
     if (submittingRef.current || loading) return;
