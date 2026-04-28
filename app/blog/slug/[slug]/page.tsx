@@ -1,9 +1,41 @@
+import type { Metadata } from "next";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBlogPostBySlug } from "@/lib/blog-posts";
 import { formatDateTimeBR } from "@/lib/date-time";
 import BlogMarkdown from "../../components/BlogMarkdown";
+
+function extractFirstImage(markdown: string): string | null {
+  const match = markdown.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/);
+  return match ? match[1] : null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const post = await getBlogPostBySlug(slug);
+    const image = extractFirstImage(post.content);
+    return {
+      title: post.title,
+      openGraph: {
+        title: post.title,
+        ...(image ? { images: [{ url: image }] } : {}),
+      },
+      twitter: {
+        card: image ? "summary_large_image" : "summary",
+        title: post.title,
+        ...(image ? { images: [image] } : {}),
+      },
+    };
+  } catch {
+    return { title: "Post" };
+  }
+}
 
 export default async function BlogPostDetailBySlugPage({
   params,
