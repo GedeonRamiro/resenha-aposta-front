@@ -19,7 +19,7 @@ const REST_COLORS = [
 ];
 
 export default function RankingChart({ data }: { data: RankingItem[] }) {
-  const top = data.slice(0, 10);
+  const top = data;
   const maxPoints = Math.max(...top.map((i) => i.points), 1);
 
   return (

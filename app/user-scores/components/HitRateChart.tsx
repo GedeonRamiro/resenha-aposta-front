@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RankingItem } from "@/lib/user-scores";
 
 export default function HitRateChart({ data }: { data: RankingItem[] }) {
-  const top = data.slice(0, 10).filter((i) => i.bets > 0);
+  const top = data.filter((i) => i.bets > 0);
   if (top.length === 0) return null;
 
   return (
