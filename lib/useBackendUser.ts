@@ -89,6 +89,8 @@ export function useBackendUser() {
   const role = backendUser?.role;
   const isAdmin = role === "ADMIN";
   const isModerator = role === "MODERATOR";
+  const canPlaceBets =
+    role === "ADMIN" || role === "MODERATOR" || role === "PLAYER";
 
   return {
     backendUser,
@@ -96,6 +98,7 @@ export function useBackendUser() {
     isAuthenticated: Boolean(user),
     isAdmin,
     isModerator,
+    canPlaceBets,
     canManageGames: isAdmin || isModerator,
   };
 }
