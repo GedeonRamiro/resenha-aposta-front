@@ -14,18 +14,35 @@ export default function MyUserRedirectPage() {
       return;
     }
 
-    if (!isAuthenticated) {
-      router.replace("/");
-      return;
-    }
-
     if (backendUser?.id) {
       router.replace(`/users/${backendUser.id}`);
       return;
     }
+  }, [backendUser?.id, isLoading, router]);
 
-    router.replace("/users");
-  }, [backendUser?.id, isAuthenticated, isLoading, router]);
+  if (isLoading) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Carregando suas informações...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Faça login para visualizar suas apostas.
+      </div>
+    );
+  }
+
+  if (!backendUser?.id) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Preparando o seu perfil...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 text-sm text-muted-foreground">

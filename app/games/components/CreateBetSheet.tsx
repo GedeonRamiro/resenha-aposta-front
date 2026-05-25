@@ -77,13 +77,13 @@ async function getCachedUserBets(userId: string): Promise<UserBetSummary[]> {
 
 export function CreateBetSheet({ game }: CreateBetSheetProps) {
   const router = useRouter();
-  const { backendUser, isLoading, isAuthenticated } = useBackendUser();
+  const { backendUser, isLoading, isAuthenticated, canPlaceBets } =
+    useBackendUser();
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<UIBetOption | "">("");
   const [loading, setLoading] = useState(false);
   const [existingBetId, setExistingBetId] = useState<string | null>(null);
   const [isCheckingExistingBet, setIsCheckingExistingBet] = useState(false);
-  const isPendingUser = backendUser?.role === "PENDING";
 
   useEffect(() => {
     if (!backendUser?.id) {
@@ -122,8 +122,8 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       return;
     }
 
-    if (isPendingUser) {
-      toast.error("Seu cadastro ainda está pendente de aprovação.");
+    if (!canPlaceBets) {
+      toast.error("Seu perfil ainda não está liberado para apostar.");
       return;
     }
 
@@ -250,7 +250,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
               isLoading ||
               !backendUser ||
               !selectedOption ||
-              isPendingUser
+              !canPlaceBets
             }
             className="w-full"
           >
