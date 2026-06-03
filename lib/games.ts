@@ -6,44 +6,38 @@ export interface GamesApiResponse extends IPagination {
 }
 
 export type GamePayload = {
-  homeTeam: string;
-  awayTeam: string;
   homeTeamId?: string;
   awayTeamId?: string;
-  homeTeamLogo?: string;
-  awayTeamLogo?: string;
-  competition?: string;
   competitionId?: string;
   gameDate: string;
   gameType?: "LEAGUE_GROUP" | "KNOCKOUT";
-  tieId?: string;
-  tieLegsCount?: number;
-  legNumber?: number;
   moreInfo?: string;
   status?: string;
   homeScore?: number;
   awayScore?: number;
+  secondLegHomeScore?: number;
+  secondLegAwayScore?: number;
   penaltyHomeScore?: number;
   penaltyAwayScore?: number;
 };
 
 type CreateGamePayload = Pick<
   GamePayload,
-  | "homeTeam"
-  | "awayTeam"
   | "homeTeamId"
   | "awayTeamId"
-  | "homeTeamLogo"
-  | "awayTeamLogo"
-  | "competition"
   | "competitionId"
   | "gameDate"
   | "gameType"
-  | "tieId"
-  | "tieLegsCount"
-  | "legNumber"
   | "moreInfo"
->;
+  | "homeScore"
+  | "awayScore"
+  | "secondLegHomeScore"
+  | "secondLegAwayScore"
+> & {
+  homeTeamId: string;
+  awayTeamId: string;
+  competitionId: string;
+};
 
 export type GameUpdatePayload = Partial<GamePayload>;
 
@@ -75,32 +69,28 @@ function getAuthHeaders(): HeadersInit {
 }
 
 function sanitizeCreateGamePayload(payload: GamePayload): CreateGamePayload {
-  const competition = payload.competition?.trim();
   const moreInfo = payload.moreInfo?.trim();
-  const homeTeamLogo = payload.homeTeamLogo?.trim();
-  const awayTeamLogo = payload.awayTeamLogo?.trim();
-  const tieId = payload.tieId?.trim();
   const homeTeamId = payload.homeTeamId?.trim();
   const awayTeamId = payload.awayTeamId?.trim();
   const competitionId = payload.competitionId?.trim();
   const gameType = payload.gameType ?? "LEAGUE_GROUP";
+  const isKnockout = gameType === "KNOCKOUT";
+
+  if (!homeTeamId || !awayTeamId || !competitionId) {
+    throw new Error("Selecione time da casa, time visitante e competição.");
+  }
 
   return {
-    homeTeam: payload.homeTeam,
-    awayTeam: payload.awayTeam,
-    homeTeamId: homeTeamId ? homeTeamId : undefined,
-    awayTeamId: awayTeamId ? awayTeamId : undefined,
-    homeTeamLogo: homeTeamLogo ? homeTeamLogo : undefined,
-    awayTeamLogo: awayTeamLogo ? awayTeamLogo : undefined,
-    competitionId: competitionId ? competitionId : undefined,
+    homeTeamId,
+    awayTeamId,
+    competitionId,
     gameDate: toApiIsoDateTime(payload.gameDate, "Data do jogo"),
-    gameType,
-    tieId: gameType === "KNOCKOUT" && tieId ? tieId : undefined,
-    tieLegsCount:
-      gameType === "KNOCKOUT" ? (payload.tieLegsCount ?? 1) : undefined,
-    legNumber: gameType === "KNOCKOUT" ? payload.legNumber : undefined,
-    competition: competition ? competition : undefined,
+    gameType: isKnockout ? "KNOCKOUT" : "LEAGUE_GROUP",
     moreInfo: moreInfo ? moreInfo : undefined,
+    homeScore: payload.homeScore,
+    awayScore: payload.awayScore,
+    secondLegHomeScore: isKnockout ? payload.secondLegHomeScore : undefined,
+    secondLegAwayScore: isKnockout ? payload.secondLegAwayScore : undefined,
   };
 }
 
@@ -108,12 +98,11 @@ function sanitizeUpdateGamePayload(
   payload: GameUpdatePayload,
 ): GameUpdatePayload {
   const gameType = payload.gameType;
-  const tieId =
-    typeof payload.tieId === "string" ? payload.tieId.trim() : undefined;
+  const isKnockout = gameType === "KNOCKOUT";
 
   const sanitizedPayload: GameUpdatePayload = {
     ...payload,
-    tieId: tieId ? tieId : undefined,
+    gameType: isKnockout ? "KNOCKOUT" : gameType,
     homeTeamId:
       typeof payload.homeTeamId === "string" && payload.homeTeamId.trim()
         ? payload.homeTeamId.trim()
@@ -135,25 +124,45 @@ function sanitizeUpdateGamePayload(
     );
   }
 
-  if (typeof payload.homeTeamLogo === "string") {
-    const homeTeamLogo = payload.homeTeamLogo.trim();
-    sanitizedPayload.homeTeamLogo = homeTeamLogo ? homeTeamLogo : undefined;
-  }
-
-  if (typeof payload.awayTeamLogo === "string") {
-    const awayTeamLogo = payload.awayTeamLogo.trim();
-    sanitizedPayload.awayTeamLogo = awayTeamLogo ? awayTeamLogo : undefined;
-  }
-
   if (gameType && gameType !== "KNOCKOUT") {
-    sanitizedPayload.tieId = undefined;
-    sanitizedPayload.tieLegsCount = undefined;
-    sanitizedPayload.legNumber = undefined;
     sanitizedPayload.penaltyHomeScore = undefined;
     sanitizedPayload.penaltyAwayScore = undefined;
+    sanitizedPayload.secondLegHomeScore = undefined;
+    sanitizedPayload.secondLegAwayScore = undefined;
+  }
+
+  if (gameType === "KNOCKOUT") {
+    sanitizedPayload.secondLegHomeScore = payload.secondLegHomeScore;
+    sanitizedPayload.secondLegAwayScore = payload.secondLegAwayScore;
   }
 
   return sanitizedPayload;
+}
+
+export function parseOptionalScoreInput(value?: string): number | undefined {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const score = Number(trimmedValue);
+
+  if (!Number.isInteger(score) || score < 0) {
+    throw new Error(
+      "O placar deve ser um número inteiro maior ou igual a zero.",
+    );
+  }
+
+  return score;
+}
+
+export function formatOptionalScoreInput(score?: number | null): string {
+  if (score === null || score === undefined) {
+    return "";
+  }
+
+  return String(score);
 }
 
 export async function getGames(

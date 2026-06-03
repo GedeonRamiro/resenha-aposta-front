@@ -20,13 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  type ApiBetOption,
-  createBet,
-  getBetsByUser,
-  updateBetById,
-  type UserBetSummary,
-} from "@/lib/bets";
+import { createBet, getBetsByUser, updateBetById } from "@/lib/bets";
 import { useBackendUser } from "@/lib/useBackendUser";
 import { IDataGame } from "@/types/types";
 
@@ -48,42 +42,16 @@ const API_TO_UI_OPTION = {
   AWAY_WIN: "2",
 } as const;
 
-const userBetsCache = new Map<string, UserBetSummary[]>();
-const userBetsPromiseCache = new Map<string, Promise<UserBetSummary[]>>();
-
-async function getCachedUserBets(userId: string): Promise<UserBetSummary[]> {
-  const cached = userBetsCache.get(userId);
-  if (cached) {
-    return cached;
-  }
-
-  const inFlight = userBetsPromiseCache.get(userId);
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const request = getBetsByUser(userId)
-    .then((bets) => {
-      userBetsCache.set(userId, bets);
-      return bets;
-    })
-    .finally(() => {
-      userBetsPromiseCache.delete(userId);
-    });
-
-  userBetsPromiseCache.set(userId, request);
-  return request;
-}
-
 export function CreateBetSheet({ game }: CreateBetSheetProps) {
   const router = useRouter();
-  const { backendUser, isLoading, isAuthenticated } = useBackendUser();
+  const { backendUser, isLoading, isAuthenticated, canPlaceBets } =
+    useBackendUser();
+  const isKnockoutGame = game.gameType === "KNOCKOUT";
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<UIBetOption | "">("");
   const [loading, setLoading] = useState(false);
   const [existingBetId, setExistingBetId] = useState<string | null>(null);
   const [isCheckingExistingBet, setIsCheckingExistingBet] = useState(false);
-  const isPendingUser = backendUser?.role === "PENDING";
 
   useEffect(() => {
     if (!backendUser?.id) {
@@ -94,11 +62,16 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
     const loadExistingBet = async () => {
       try {
         setIsCheckingExistingBet(true);
-        const userBets = await getCachedUserBets(backendUser.id);
+        const userBets = await getBetsByUser(backendUser.id);
         const existingBet = userBets.find((bet) => bet.gameId === game.id);
         setExistingBetId(existingBet?.id ?? null);
+
+        const mappedOption = existingBet
+          ? API_TO_UI_OPTION[existingBet.option]
+          : "";
+
         setSelectedOption(
-          existingBet ? API_TO_UI_OPTION[existingBet.option] : "",
+          isKnockoutGame && mappedOption === "X" ? "" : mappedOption,
         );
       } catch {
         setExistingBetId(null);
@@ -109,7 +82,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
     };
 
     void loadExistingBet();
-  }, [backendUser?.id, game.id]);
+  }, [backendUser?.id, game.id, isKnockoutGame]);
 
   const handleCreateBet = async () => {
     if (!isAuthenticated) {
@@ -122,8 +95,8 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       return;
     }
 
-    if (isPendingUser) {
-      toast.error("Seu cadastro ainda está pendente de aprovação.");
+    if (!canPlaceBets) {
+      toast.error("Seu perfil ainda não está liberado para apostar.");
       return;
     }
 
@@ -139,20 +112,6 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       if (existingBetId) {
         await updateBetById(existingBetId, { option });
 
-        const cachedUserBets = userBetsCache.get(backendUser.id) ?? [];
-        userBetsCache.set(
-          backendUser.id,
-          cachedUserBets.map((bet) =>
-            bet.id === existingBetId
-              ? {
-                  ...bet,
-                  option,
-                  updatedAt: new Date().toISOString(),
-                }
-              : bet,
-          ),
-        );
-
         toast.success("Aposta atualizada com sucesso!");
       } else {
         const createdBet = await createBet({
@@ -160,18 +119,6 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
           option,
         });
 
-        const cachedUserBets = userBetsCache.get(backendUser.id) ?? [];
-        userBetsCache.set(backendUser.id, [
-          ...cachedUserBets,
-          {
-            id: createdBet.id,
-            userId: createdBet.userId,
-            gameId: createdBet.gameId,
-            option: createdBet.option as ApiBetOption,
-            createdAt: createdBet.createdAt,
-            updatedAt: createdBet.updatedAt,
-          },
-        ]);
         setExistingBetId(createdBet.id);
 
         toast.success("Aposta criada com sucesso!");
@@ -197,11 +144,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       <SheetTrigger asChild>
         <Button
           variant={existingBetId ? "secondary" : "default"}
-          className={
-            existingBetId
-              ? "w-full border border-orange-500/35 bg-orange-500/12 text-orange-700 hover:bg-orange-500/18"
-              : "w-full"
-          }
+          className="w-full"
           disabled={isCheckingExistingBet || isLoading}
         >
           {existingBetId ? <Pencil className="size-4" /> : null}
@@ -219,8 +162,12 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
           </SheetTitle>
           <SheetDescription>
             {existingBetId
-              ? `Atualize sua opção para ${game.homeTeam} x ${game.awayTeam}`
-              : `Escolha sua opção para ${game.homeTeam} x ${game.awayTeam}`}
+              ? isKnockoutGame
+                ? `Atualize quem avança em ${game.homeTeam} x ${game.awayTeam}`
+                : `Atualize sua opção para ${game.homeTeam} x ${game.awayTeam}`
+              : isKnockoutGame
+                ? `Escolha quem avança em ${game.homeTeam} x ${game.awayTeam}`
+                : `Escolha sua opção para ${game.homeTeam} x ${game.awayTeam}`}
           </SheetDescription>
         </SheetHeader>
 
@@ -232,11 +179,19 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
               onValueChange={(value) => setSelectedOption(value as UIBetOption)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a opção" />
+                <SelectValue
+                  placeholder={
+                    isKnockoutGame
+                      ? "Selecione quem avança"
+                      : "Selecione a opção"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">{game.homeTeam}</SelectItem>
-                <SelectItem value="X">Empate</SelectItem>
+                {!isKnockoutGame ? (
+                  <SelectItem value="X">Empate</SelectItem>
+                ) : null}
                 <SelectItem value="2">{game.awayTeam}</SelectItem>
               </SelectContent>
             </Select>
@@ -249,7 +204,7 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
               isLoading ||
               !backendUser ||
               !selectedOption ||
-              isPendingUser
+              !canPlaceBets
             }
             className="w-full"
           >

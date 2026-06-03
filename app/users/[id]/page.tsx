@@ -1,31 +1,53 @@
 import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
-import { Badge } from "@/components/ui/badge";
+import PaginationShadcn from "@/components/PaginationShadcn";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/UserAvatar";
 import { IDataBet, IDataUser } from "@/types/types";
+import { getBetsByUserPaginated } from "@/lib/bets";
 import { getUserById, getUserRoleLabel } from "@/lib/users";
 import { formatDateTimeBR } from "@/lib/date-time";
 import { UserAdminActions } from "./components/UserAdminActions";
 import { UserBetsTable } from "./components/UserBetsTable";
 
-interface IUserDetails extends IDataUser {
-  bets: IDataBet[];
-}
-
 export default async function UserDetails({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const routeParams = await params;
+  const queryParams = await searchParams;
   const userId = routeParams.id;
+  const currentPage = Number.parseInt(queryParams.page ?? "1", 10);
+  const safeCurrentPage =
+    Number.isNaN(currentPage) || currentPage < 1 ? 1 : currentPage;
 
-  let user: IUserDetails | null = null;
+  let user: IDataUser | null = null;
+  let bets: IDataBet[] = [];
+  let betsPagination: {
+    count: number;
+    nextPage: number | null;
+    prevPage: number | null;
+    lastPage: number | null;
+  } | null = null;
   let errorMessage = "";
 
   try {
-    user = await getUserById<IUserDetails>(userId);
+    const [userResponse, betsResponse] = await Promise.all([
+      getUserById<IDataUser>(userId),
+      getBetsByUserPaginated(userId, safeCurrentPage),
+    ]);
+
+    user = userResponse;
+    bets = betsResponse.data;
+    betsPagination = {
+      count: betsResponse.count,
+      nextPage: betsResponse.nextPage,
+      prevPage: betsResponse.prevPage,
+      lastPage: betsResponse.lastPage,
+    };
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "404") {
       errorMessage = "Usuário não encontrado.";
@@ -106,13 +128,25 @@ export default async function UserDetails({
               <CardTitle>Apostas do usuário</CardTitle>
             </CardHeader>
             <CardContent>
-              {user.bets.length === 0 ? (
+              {bets.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Esse usuário ainda não possui apostas.
                 </p>
               ) : (
-                <UserBetsTable bets={user.bets} userId={user.id} />
+                <UserBetsTable bets={bets} userId={user.id} />
               )}
+
+              {betsPagination && bets.length !== 0 ? (
+                <div className="pt-4">
+                  <PaginationShadcn
+                    count={betsPagination.count}
+                    currentPage={safeCurrentPage}
+                    nextPage={betsPagination.nextPage}
+                    lastPage={betsPagination.lastPage}
+                    prevPage={betsPagination.prevPage}
+                  />
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

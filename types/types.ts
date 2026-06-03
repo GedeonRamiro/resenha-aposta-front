@@ -1,5 +1,6 @@
 export interface IDataGame {
   awayScore: number | null;
+  secondLegAwayScore: number | null;
   penaltyAwayScore: number | null;
   awayTeam: string;
   awayTeamLogo: string | null;
@@ -9,15 +10,15 @@ export interface IDataGame {
   gameType: string;
   gameDate: string;
   homeScore: number | null;
+  secondLegHomeScore: number | null;
   penaltyHomeScore: number | null;
   homeTeam: string;
   homeTeamId: string | null;
   homeTeamLogo: string | null;
   id: string;
-  legNumber: number | null;
   moreInfo: string | null;
+  relatedKnockoutGames?: IDataGame[];
   status: string;
-  tieId: string | null;
   awayTeamId: string | null;
   competitionId: string | null;
   updatedAt: string;

@@ -46,7 +46,8 @@ export async function GET() {
     const res = await fetch(
       "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard",
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(8000),
         headers: {
           Accept: "application/json",
           "User-Agent": "Mozilla/5.0",
@@ -55,10 +56,7 @@ export async function GET() {
     );
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: `Live provider unavailable (${res.status})` },
-        { status: 502 },
-      );
+      return NextResponse.json([]);
     }
 
     const data = (await res.json()) as EspnScoreboardResponse;
@@ -95,9 +93,6 @@ export async function GET() {
 
     return NextResponse.json(matches);
   } catch {
-    return NextResponse.json(
-      { error: "Unexpected error while fetching live matches" },
-      { status: 500 },
-    );
+    return NextResponse.json([]);
   }
 }

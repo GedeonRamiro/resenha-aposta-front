@@ -56,6 +56,29 @@ export function ConfirmAction({
     return headers;
   }
 
+  async function getErrorMessageFromResponse(res: Response) {
+    const contentType = res.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const payload = await res.json().catch(() => null);
+
+      if (payload && typeof payload === "object") {
+        const maybeMessage = (payload as { message?: unknown }).message;
+
+        if (Array.isArray(maybeMessage)) {
+          return maybeMessage.join(" ");
+        }
+
+        if (typeof maybeMessage === "string" && maybeMessage.trim()) {
+          return maybeMessage;
+        }
+      }
+    }
+
+    const text = await res.text().catch(() => "");
+    return text || "Erro ao executar ação";
+  }
+
   async function handleAction(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
@@ -71,8 +94,8 @@ export function ConfirmAction({
       });
 
       if (!res.ok) {
-        const details = await res.text();
-        throw new Error(details || "Erro ao executar ação");
+        const details = await getErrorMessageFromResponse(res);
+        throw new Error(details);
       }
 
       toast.success("Ação realizada com sucesso");

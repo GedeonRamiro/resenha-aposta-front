@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSidebarStore } from "@/components/sidebar-store";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -25,6 +25,7 @@ import {
   FiUsers,
   FiBookOpen,
   FiBarChart2,
+  FiPlusCircle,
   FiSettings,
 } from "react-icons/fi";
 import { FaRegFutbol } from "react-icons/fa6";
@@ -34,6 +35,10 @@ type RankingSubItem = {
   label: string;
   href: string;
 };
+
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 function seasonToHref(season: RankingSeason) {
   const params = new URLSearchParams();
@@ -65,12 +70,18 @@ const menuItems = [
 
 export function Sidebar() {
   const { open, closeSidebar } = useSidebarStore();
-  const { isAuthenticated, isAdmin } = useBackendUser();
+  const { isAuthenticated, isAdmin, isModerator } = useBackendUser();
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentPeriod = searchParams.get("period") || "geral";
   const isRankingRoute = pathname.startsWith("/user-scores");
   const [isRankingOpen, setIsRankingOpen] = useState(isRankingRoute);
+  const rankingOpen = isRankingOpen || isRankingRoute;
   const [rankingSubItems, setRankingSubItems] = useState<RankingSubItem[]>([
     { label: "Geral", href: "/user-scores?period=geral" },
   ]);
@@ -94,12 +105,6 @@ export function Sidebar() {
         ]);
       });
   }, []);
-
-  useEffect(() => {
-    if (isRankingRoute) {
-      setIsRankingOpen(true);
-    }
-  }, [isRankingRoute]);
 
   useEffect(() => {
     loadRankingSubItems();
@@ -129,7 +134,8 @@ export function Sidebar() {
         <SidebarContent>
           <SidebarGroup>
             {menuItems.map((item) => {
-              if (item.requiresAuth && !isAuthenticated) {
+              // Keep auth-only items hidden until mount to avoid SSR/client mismatch.
+              if (item.requiresAuth && (!isClient || !isAuthenticated)) {
                 return null;
               }
 
@@ -159,7 +165,7 @@ export function Sidebar() {
                       <ChevronDown
                         className={cn(
                           "size-4 transition-transform duration-200",
-                          isRankingOpen ? "rotate-180" : "rotate-0",
+                          rankingOpen ? "rotate-180" : "rotate-0",
                         )}
                       />
                     </Button>
@@ -167,7 +173,7 @@ export function Sidebar() {
                     <div
                       className={cn(
                         "ml-6 mt-2 overflow-hidden border-l border-primary/20 pl-3 transition-all duration-200",
-                        isRankingOpen
+                        rankingOpen
                           ? "max-h-40 opacity-100"
                           : "max-h-0 opacity-0",
                       )}
@@ -230,28 +236,74 @@ export function Sidebar() {
             })}
           </SidebarGroup>
 
-          {isAdmin && (
+          {(isAdmin || isModerator) && (
             <SidebarGroup className="border-t border-primary/20 pt-2">
               <Button
                 asChild
                 variant="ghost"
                 className={cn(
                   "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === "/settings"
+                  pathname === "/teams"
                     ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
                     : "border-transparent hover:border-primary/20 hover:bg-primary/10",
                 )}
                 onClick={closeSidebar}
               >
                 <Link
-                  href="/settings"
-                  aria-current={pathname === "/settings" ? "page" : undefined}
+                  href="/teams"
+                  aria-current={pathname === "/teams" ? "page" : undefined}
                   className="flex flex-1 items-center gap-3"
                 >
-                  <FiSettings />
-                  Configurações
+                  <FiPlusCircle />
+                  Times
                 </Link>
               </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                className={cn(
+                  "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors mt-2",
+                  pathname === "/competitions"
+                    ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                    : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                )}
+                onClick={closeSidebar}
+              >
+                <Link
+                  href="/competitions"
+                  aria-current={
+                    pathname === "/competitions" ? "page" : undefined
+                  }
+                  className="flex flex-1 items-center gap-3"
+                >
+                  <FiPlusCircle />
+                  Competições
+                </Link>
+              </Button>
+
+              {isAdmin ? (
+                <Button
+                  asChild
+                  variant="ghost"
+                  className={cn(
+                    "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                    pathname === "/settings"
+                      ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                      : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                  )}
+                  onClick={closeSidebar}
+                >
+                  <Link
+                    href="/settings"
+                    aria-current={pathname === "/settings" ? "page" : undefined}
+                    className="flex flex-1 items-center gap-3"
+                  >
+                    <FiSettings />
+                    Configurações
+                  </Link>
+                </Button>
+              ) : null}
             </SidebarGroup>
           )}
         </SidebarContent>

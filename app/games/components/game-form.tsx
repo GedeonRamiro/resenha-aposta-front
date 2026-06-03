@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,30 +29,22 @@ import { GAME_STATUS_LABEL, GameStatus } from "@/enums/game-status";
 import { getTeamsSafe, Team } from "@/lib/teams";
 import { Competition, getCompetitionsSafe } from "@/lib/competitions";
 
-const optionalLogoUrl = (message: string) =>
-  z.string().url(message).or(z.literal("")).optional();
+const optionalScoreInput = z
+  .string()
+  .optional()
+  .refine((value) => !value?.trim() || /^\d+$/.test(value.trim()), {
+    message: "Use um número inteiro maior ou igual a zero.",
+  });
 
 const schema = z.object({
-  homeTeam: z
-    .string()
-    .trim()
-    .min(3, "Nome do time da casa deve ter ao menos 3 caracteres"),
-  awayTeam: z
-    .string()
-    .trim()
-    .min(3, "Nome do time visitante deve ter ao menos 3 caracteres"),
-  homeTeamLogo: optionalLogoUrl("URL inválida para o logo do time da casa"),
-  awayTeamLogo: optionalLogoUrl("URL inválida para o logo do time visitante"),
-  competition: z.string().trim().min(1, "Liga/Campeonato é obrigatório"),
   gameDate: z.string().trim().min(1, "Data do jogo é obrigatória"),
   gameType: z.enum(["LEAGUE_GROUP", "KNOCKOUT"]),
-  tieId: z.string().optional(),
-  homeTeamId: z.string().optional(),
-  awayTeamId: z.string().optional(),
-  competitionId: z.string().optional(),
-  tieLegsCount: z.number().int().min(1).max(2).optional(),
-  legNumber: z.number().int().min(1).max(2).optional(),
+  homeTeamId: z.string().trim().min(1, "Selecione o time da casa"),
+  awayTeamId: z.string().trim().min(1, "Selecione o time visitante"),
+  competitionId: z.string().trim().min(1, "Selecione a competição"),
   moreInfo: z.string().optional(),
+  secondLegHomeScore: optionalScoreInput,
+  secondLegAwayScore: optionalScoreInput,
 
   status: z.nativeEnum(GameStatus).optional(),
 
@@ -79,20 +71,14 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     resolver: zodResolver(schema),
     mode: "onTouched",
     defaultValues: {
-      homeTeam: initialData?.homeTeam ?? "",
-      awayTeam: initialData?.awayTeam ?? "",
-      homeTeamLogo: initialData?.homeTeamLogo ?? "",
-      awayTeamLogo: initialData?.awayTeamLogo ?? "",
-      competition: initialData?.competition ?? "",
       gameDate: initialData?.gameDate ?? "",
       gameType: initialData?.gameType ?? "LEAGUE_GROUP",
-      tieId: initialData?.tieId ?? "",
       homeTeamId: initialData?.homeTeamId ?? "",
       awayTeamId: initialData?.awayTeamId ?? "",
       competitionId: initialData?.competitionId ?? "",
-      tieLegsCount: initialData?.tieLegsCount ?? 1,
-      legNumber: initialData?.legNumber ?? 1,
       moreInfo: initialData?.moreInfo ?? "",
+      secondLegHomeScore: initialData?.secondLegHomeScore ?? "",
+      secondLegAwayScore: initialData?.secondLegAwayScore ?? "",
       status: initialData?.status ?? undefined,
       homeScore: initialData?.homeScore ?? undefined,
       awayScore: initialData?.awayScore ?? undefined,
@@ -104,7 +90,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
   const isEditing = !!initialData;
   const isBusy = !!loading || form.formState.isSubmitting;
   const gameType = form.watch("gameType");
-  const tieLegsCount = form.watch("tieLegsCount");
   const [teams, setTeams] = useState<Team[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
 
@@ -130,23 +115,12 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     };
   }, []);
 
-  const teamsById = useMemo(
-    () => new Map(teams.map((team) => [team.id, team])),
-    [teams],
-  );
-
-  const competitionsById = useMemo(
-    () =>
-      new Map(competitions.map((competition) => [competition.id, competition])),
-    [competitions],
-  );
-
   return (
     <Card className="w-full max-w-lg shadow-xl">
       <CardHeader>
         <CardContent>
-          Preencha apenas os dados da partida. Os campos placar e status devem
-          permanecer vazios e serão atualizados após a finalização do jogo.
+          Preencha os dados da partida. Em mata-mata com ida e volta, informe os
+          placares da ida e da volta para cálculo correto do resultado.
         </CardContent>
       </CardHeader>
 
@@ -159,26 +133,15 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 name="homeTeamId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time da casa (cadastro)</FormLabel>
+                    <FormLabel>
+                      Time da casa (cadastro)
+                      <span className="text-red-500"> *</span>
+                    </FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        const nextValue = value === "manual" ? "" : value;
-                        field.onChange(nextValue);
-                        const selectedTeam = teamsById.get(nextValue);
-                        if (!selectedTeam) {
-                          return;
-                        }
-
-                        form.setValue("homeTeam", selectedTeam.name, {
-                          shouldDirty: true,
-                        });
-                        form.setValue(
-                          "homeTeamLogo",
-                          selectedTeam.logoUrl ?? "",
-                          { shouldDirty: true },
-                        );
+                        field.onChange(value);
                       }}
-                      value={field.value || "manual"}
+                      value={field.value || undefined}
                       disabled={isBusy}
                     >
                       <FormControl>
@@ -187,7 +150,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
                         {teams.map((team) => (
                           <SelectItem key={team.id} value={team.id}>
                             {team.name}
@@ -205,26 +167,15 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 name="awayTeamId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time visitante (cadastro)</FormLabel>
+                    <FormLabel>
+                      Time visitante (cadastro)
+                      <span className="text-red-500"> *</span>
+                    </FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        const nextValue = value === "manual" ? "" : value;
-                        field.onChange(nextValue);
-                        const selectedTeam = teamsById.get(nextValue);
-                        if (!selectedTeam) {
-                          return;
-                        }
-
-                        form.setValue("awayTeam", selectedTeam.name, {
-                          shouldDirty: true,
-                        });
-                        form.setValue(
-                          "awayTeamLogo",
-                          selectedTeam.logoUrl ?? "",
-                          { shouldDirty: true },
-                        );
+                        field.onChange(value);
                       }}
-                      value={field.value || "manual"}
+                      value={field.value || undefined}
                       disabled={isBusy}
                     >
                       <FormControl>
@@ -233,7 +184,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
                         {teams.map((team) => (
                           <SelectItem key={team.id} value={team.id}>
                             {team.name}
@@ -245,84 +195,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="homeTeam"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Time da Casa <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Corinthians"
-                        disabled={isBusy}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="awayTeam"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Time Visitante <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Flamengo"
-                        disabled={isBusy}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="homeTeamLogo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Logo do Time da Casa (URL)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://..."
-                        disabled={isBusy}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="awayTeamLogo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Logo do Time Visitante (URL)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://..."
-                        disabled={isBusy}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <FormField
@@ -330,22 +202,15 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               name="competitionId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Competição (cadastro)</FormLabel>
+                  <FormLabel>
+                    Competição (cadastro)
+                    <span className="text-red-500"> *</span>
+                  </FormLabel>
                   <Select
                     onValueChange={(value) => {
-                      const nextValue = value === "manual" ? "" : value;
-                      field.onChange(nextValue);
-                      const selectedCompetition =
-                        competitionsById.get(nextValue);
-                      if (!selectedCompetition) {
-                        return;
-                      }
-
-                      form.setValue("competition", selectedCompetition.name, {
-                        shouldDirty: true,
-                      });
+                      field.onChange(value);
                     }}
-                    value={field.value || "manual"}
+                    value={field.value || undefined}
                     disabled={isBusy}
                   >
                     <FormControl>
@@ -354,7 +219,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="manual">Manual</SelectItem>
                       {competitions.map((competition) => (
                         <SelectItem key={competition.id} value={competition.id}>
                           {competition.name}
@@ -369,32 +233,12 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
 
             <FormField
               control={form.control}
-              name="competition"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Liga/Campeonato <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Brasileirão Série A"
-                      disabled={isBusy}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="gameType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de jogo</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => field.onChange(value)}
                     defaultValue={field.value}
                     disabled={isBusy}
                   >
@@ -413,95 +257,17 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               )}
             />
 
-            {gameType === "KNOCKOUT" && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="tieId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ID do confronto (opcional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Preencha para vincular à volta"
-                            disabled={isBusy}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="tieLegsCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantidade de jogos</FormLabel>
-                        <Select
-                          onValueChange={(value) =>
-                            field.onChange(Number(value))
-                          }
-                          defaultValue={String(field.value ?? 1)}
-                          disabled={isBusy}
-                        >
-                          <FormControl className="w-full">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="1">Jogo único</SelectItem>
-                            <SelectItem value="2">Ida e volta</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {tieLegsCount === 2 && (
-                  <FormField
-                    control={form.control}
-                    name="legNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Perna do confronto</FormLabel>
-                        <Select
-                          onValueChange={(value) =>
-                            field.onChange(Number(value))
-                          }
-                          defaultValue={String(field.value ?? 1)}
-                          disabled={isBusy}
-                        >
-                          <FormControl className="w-full">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="1">Ida</SelectItem>
-                            <SelectItem value="2">Volta</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </>
-            )}
-
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="homeScore"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Placar Casa</FormLabel>
+                    <FormLabel>
+                      {gameType === "KNOCKOUT"
+                        ? "Placar ida da casa"
+                        : "Placar Casa"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -529,7 +295,11 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 name="awayScore"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Placar Visitante</FormLabel>
+                    <FormLabel>
+                      {gameType === "KNOCKOUT"
+                        ? "Placar ida do visitante"
+                        : "Placar Visitante"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -554,63 +324,111 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
             </div>
 
             {gameType === "KNOCKOUT" && (
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="penaltyHomeScore"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pênaltis Casa</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          disabled={isBusy}
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === ""
-                                ? undefined
-                                : Number(event.target.value),
-                            )
-                          }
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="secondLegHomeScore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Placar volta da casa</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="0"
+                            disabled={isBusy}
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="penaltyAwayScore"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pênaltis Visitante</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          disabled={isBusy}
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === ""
-                                ? undefined
-                                : Number(event.target.value),
-                            )
-                          }
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="secondLegAwayScore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Placar volta do visitante</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="0"
+                            disabled={isBusy}
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="penaltyHomeScore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pênaltis Casa</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            disabled={isBusy}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === ""
+                                  ? undefined
+                                  : Number(event.target.value),
+                              )
+                            }
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="penaltyAwayScore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pênaltis Visitante</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            disabled={isBusy}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === ""
+                                  ? undefined
+                                  : Number(event.target.value),
+                              )
+                            }
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
             )}
 
             <FormField

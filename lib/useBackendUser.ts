@@ -23,17 +23,18 @@ export function useBackendUser() {
 
   const session = sessionData?.session;
   const user = sessionData?.user;
+  const sessionCacheKey = session?.id ?? user?.id ?? user?.email;
 
   useEffect(() => {
     const apiUrl = getApiBaseUrl();
 
-    if (!apiUrl || !session?.id || !user?.email) {
+    if (!apiUrl || !sessionCacheKey || !user?.email) {
       setBackendUser(null);
       setHasSyncAttempted(true);
       return;
     }
 
-    const cachedUser = backendUserBySessionId.get(session.id);
+    const cachedUser = backendUserBySessionId.get(sessionCacheKey);
     const hasBackendToken =
       typeof window !== "undefined" &&
       Boolean(window.localStorage.getItem(BACKEND_TOKEN_KEY));
@@ -73,7 +74,7 @@ export function useBackendUser() {
           window.localStorage.setItem(BACKEND_TOKEN_KEY, payload.token);
         }
 
-        backendUserBySessionId.set(session.id, syncedUser);
+        backendUserBySessionId.set(sessionCacheKey, syncedUser);
         setBackendUser(syncedUser);
       } catch {
         setBackendUser(null);
@@ -84,11 +85,13 @@ export function useBackendUser() {
     };
 
     void syncUser();
-  }, [session?.id, user?.email, user?.id, user?.image, user?.name]);
+  }, [sessionCacheKey, user?.email, user?.id, user?.image, user?.name]);
 
   const role = backendUser?.role;
   const isAdmin = role === "ADMIN";
   const isModerator = role === "MODERATOR";
+  const canPlaceBets =
+    role === "ADMIN" || role === "MODERATOR" || role === "PLAYER";
 
   return {
     backendUser,
@@ -96,6 +99,7 @@ export function useBackendUser() {
     isAuthenticated: Boolean(user),
     isAdmin,
     isModerator,
+    canPlaceBets,
     canManageGames: isAdmin || isModerator,
   };
 }

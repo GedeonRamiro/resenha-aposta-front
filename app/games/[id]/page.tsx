@@ -12,7 +12,6 @@ import { CreateBetSheet } from "../components/CreateBetSheet";
 import { GameAdminActions } from "../components/GameAdminActions";
 import { GenerateInfoButton } from "../components/GenerateInfoButton";
 import { TeamLogo } from "@/components/TeamLogo";
-import { CreateTieBetSheet } from "../components/CreateTieBetSheet";
 
 export default async function GameDetails({
   params,
@@ -43,6 +42,14 @@ export default async function GameDetails({
     );
   }
 
+  const isKnockout = game.gameType === "KNOCKOUT";
+  const hasSecondLegResult =
+    isKnockout &&
+    typeof game.homeScore === "number" &&
+    typeof game.awayScore === "number" &&
+    typeof game.secondLegHomeScore === "number" &&
+    typeof game.secondLegAwayScore === "number";
+
   return (
     <>
       <BreadcrumbNav
@@ -70,9 +77,24 @@ export default async function GameDetails({
                   </div>
 
                   {typeof game.homeScore === "number" ? (
-                    <span className="shrink-0 font-bold text-3xl">
-                      {game.homeScore}
-                    </span>
+                    <div className="shrink-0 text-right font-bold tabular-nums">
+                      <span className="inline-flex items-center gap-2 text-3xl">
+                        <span className="inline-flex w-8 justify-center">
+                          {game.homeScore}
+                        </span>
+                        {hasSecondLegResult ? (
+                          <span className="inline-flex w-8 justify-center">
+                            {game.secondLegHomeScore}
+                          </span>
+                        ) : null}
+                        {typeof game.penaltyHomeScore === "number" &&
+                        typeof game.penaltyAwayScore === "number" ? (
+                          <span className="inline-flex min-w-12 justify-center">
+                            ({game.penaltyHomeScore})
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
                   ) : null}
                 </div>
 
@@ -87,9 +109,24 @@ export default async function GameDetails({
                   </div>
 
                   {typeof game.awayScore === "number" ? (
-                    <span className="shrink-0 font-bold text-3xl">
-                      {game.awayScore}
-                    </span>
+                    <div className="shrink-0 text-right font-bold tabular-nums">
+                      <span className="inline-flex items-center gap-2 text-3xl">
+                        <span className="inline-flex w-8 justify-center">
+                          {game.awayScore}
+                        </span>
+                        {hasSecondLegResult ? (
+                          <span className="inline-flex w-8 justify-center">
+                            {game.secondLegAwayScore}
+                          </span>
+                        ) : null}
+                        {typeof game.penaltyHomeScore === "number" &&
+                        typeof game.penaltyAwayScore === "number" ? (
+                          <span className="inline-flex min-w-12 justify-center">
+                            ({game.penaltyAwayScore})
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
                   ) : null}
                 </div>
               </div>
@@ -140,20 +177,9 @@ export default async function GameDetails({
                 Tipo de jogo
               </label>
               <p className="text-lg">
-                {game.gameType === "KNOCKOUT" ? "Mata-mata" : "Liga/Grupos"}
+                {isKnockout ? "Mata-mata" : "Liga/Grupos"}
               </p>
             </div>
-
-            {game.gameType === "KNOCKOUT" && game.legNumber ? (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Fase do confronto
-                </label>
-                <p className="text-lg">
-                  {game.legNumber === 1 ? "Ida" : "Volta"}
-                </p>
-              </div>
-            ) : null}
 
             <div>
               <label className="text-sm font-medium text-muted-foreground">
@@ -176,19 +202,6 @@ export default async function GameDetails({
               </div>
             )}
 
-            {game.gameType === "KNOCKOUT" &&
-            typeof game.penaltyHomeScore === "number" &&
-            typeof game.penaltyAwayScore === "number" ? (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Pênaltis
-                </label>
-                <p className="text-lg">
-                  {game.penaltyHomeScore} x {game.penaltyAwayScore}
-                </p>
-              </div>
-            ) : null}
-
             <GenerateInfoButton
               gameId={game.id}
               initialMoreInfo={game.moreInfo}
@@ -197,12 +210,6 @@ export default async function GameDetails({
             {game.status === "SCHEDULED" && (
               <div className="pt-6">
                 <CreateBetSheet game={game} />
-              </div>
-            )}
-
-            {game.gameType === "KNOCKOUT" && game.tieId && (
-              <div className="pt-3">
-                <CreateTieBetSheet game={game} />
               </div>
             )}
 

@@ -6,6 +6,10 @@ export interface BetsApiResponse extends IPagination {
   data: IDataBet[];
 }
 
+export interface UserBetsApiResponse extends IPagination {
+  data: IDataBet[];
+}
+
 export type ApiBetOption = "HOME_WIN" | "DRAW" | "AWAY_WIN";
 
 export type UserBetSummary = {
@@ -25,6 +29,64 @@ export type CreateBetPayload = {
 export type UpdateBetPayload = {
   option: ApiBetOption;
 };
+
+function getGameResultFromGame(
+  game: Pick<
+    IDataGame,
+    | "gameType"
+    | "homeScore"
+    | "awayScore"
+    | "secondLegHomeScore"
+    | "secondLegAwayScore"
+    | "penaltyHomeScore"
+    | "penaltyAwayScore"
+  >,
+): ApiBetOption | null {
+  const hasSecondLegHome = typeof game.secondLegHomeScore === "number";
+  const hasSecondLegAway = typeof game.secondLegAwayScore === "number";
+
+  if (game.gameType === "KNOCKOUT" && hasSecondLegHome !== hasSecondLegAway) {
+    return null;
+  }
+
+  const homeScore =
+    game.gameType === "KNOCKOUT" && hasSecondLegHome
+      ? game.homeScore !== null
+        ? game.homeScore + (game.secondLegHomeScore as number)
+        : null
+      : game.homeScore;
+  const awayScore =
+    game.gameType === "KNOCKOUT" && hasSecondLegAway
+      ? game.awayScore !== null
+        ? game.awayScore + (game.secondLegAwayScore as number)
+        : null
+      : game.awayScore;
+
+  if (homeScore === null || awayScore === null) {
+    return null;
+  }
+
+  if (homeScore > awayScore) {
+    return "HOME_WIN";
+  }
+
+  if (awayScore > homeScore) {
+    return "AWAY_WIN";
+  }
+
+  if (
+    game.gameType === "KNOCKOUT" &&
+    typeof game.penaltyHomeScore === "number" &&
+    typeof game.penaltyAwayScore === "number" &&
+    game.penaltyHomeScore !== game.penaltyAwayScore
+  ) {
+    return game.penaltyHomeScore > game.penaltyAwayScore
+      ? "HOME_WIN"
+      : "AWAY_WIN";
+  }
+
+  return "DRAW";
+}
 
 export function getBetOptionText(
   option: string,
@@ -46,20 +108,15 @@ export function getBetResultLabel(bet: IDataBet): "GREEN" | "RED" | null {
     return null;
   }
 
-  if (typeof bet.isCorrect === "boolean") {
-    return bet.isCorrect ? "GREEN" : "RED";
-  }
+  const result = getGameResultFromGame(bet.game);
 
-  if (bet.game.homeScore === null || bet.game.awayScore === null) {
+  if (!result) {
     return null;
   }
 
-  const result =
-    bet.game.homeScore > bet.game.awayScore
-      ? "HOME_WIN"
-      : bet.game.homeScore < bet.game.awayScore
-        ? "AWAY_WIN"
-        : "DRAW";
+  if (typeof bet.isCorrect === "boolean") {
+    return bet.isCorrect ? "GREEN" : "RED";
+  }
 
   return bet.option === result ? "GREEN" : "RED";
 }
@@ -130,6 +187,33 @@ export async function getBetsByUser(userId: string): Promise<UserBetSummary[]> {
   }
 
   return (await response.json()) as UserBetSummary[];
+}
+
+export async function getBetsByUserPaginated(
+  userId: string,
+  page: number,
+  limit?: number,
+): Promise<UserBetsApiResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+  });
+
+  if (typeof limit === "number") {
+    params.set("limit", String(limit));
+  }
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/bets/user/${encodeURIComponent(userId)}/paginated?${params.toString()}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(String(response.status));
+  }
+
+  return (await response.json()) as UserBetsApiResponse;
 }
 
 export async function createBet(payload: CreateBetPayload): Promise<IDataBet> {

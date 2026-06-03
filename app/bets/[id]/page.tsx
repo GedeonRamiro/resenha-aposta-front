@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -47,7 +46,12 @@ function getBetOptionText(option: ApiBetOption, bet: IDataBet): string {
 export default function EditBetPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { isAuthenticated, isLoading: isAuthLoading } = useBackendUser();
+  const {
+    backendUser,
+    isAuthenticated,
+    canPlaceBets,
+    isLoading: isAuthLoading,
+  } = useBackendUser();
 
   const betId = params?.id;
 
@@ -58,11 +62,10 @@ export default function EditBetPage() {
 
   const isMarketOpen = bet?.game.status === "SCHEDULED";
   const betResult = bet ? getBetResultLabel(bet) : null;
-
-  useEffect(() => {
-    if (isAuthLoading) return;
-    if (!isAuthenticated) router.replace("/bets");
-  }, [isAuthenticated, isAuthLoading, router]);
+  const isOwner = Boolean(bet && backendUser?.id === bet.userId);
+  const canEditBet = Boolean(
+    bet && isAuthenticated && canPlaceBets && isOwner && isMarketOpen,
+  );
 
   useEffect(() => {
     async function fetchBet() {
@@ -89,6 +92,18 @@ export default function EditBetPage() {
     event.preventDefault();
 
     if (!bet || submitting) return;
+    if (!isAuthenticated) {
+      toast.error("Faça login para editar sua aposta.");
+      return;
+    }
+    if (!canPlaceBets) {
+      toast.error("Seu perfil ainda não está liberado para apostar.");
+      return;
+    }
+    if (!isOwner) {
+      toast.error("Você só pode editar as suas próprias apostas.");
+      return;
+    }
     if (!isMarketOpen) {
       toast.error("Mercado fechado. Não é possível editar essa aposta.");
       return;
@@ -210,7 +225,7 @@ export default function EditBetPage() {
                   <Select
                     value={option}
                     onValueChange={(value) => setOption(value as ApiBetOption)}
-                    disabled={!isMarketOpen || submitting}
+                    disabled={!canEditBet || submitting || isAuthLoading}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione uma opção" />
@@ -225,7 +240,23 @@ export default function EditBetPage() {
                   </Select>
                 </div>
 
-                {!isMarketOpen ? (
+                {isAuthLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Validando permissões da sua conta...
+                  </p>
+                ) : !isAuthenticated ? (
+                  <p className="text-sm text-muted-foreground">
+                    Faça login para editar sua aposta.
+                  </p>
+                ) : !canPlaceBets ? (
+                  <p className="text-sm text-muted-foreground">
+                    Seu perfil ainda não está liberado para apostar.
+                  </p>
+                ) : !isOwner ? (
+                  <p className="text-sm text-muted-foreground">
+                    Apenas o dono da aposta pode editar este palpite.
+                  </p>
+                ) : !isMarketOpen ? (
                   <p className="text-sm text-muted-foreground">
                     Mercado fechado. Apenas apostas com jogo aberto podem ser
                     editadas.
@@ -235,7 +266,7 @@ export default function EditBetPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={!isMarketOpen || submitting}
+                  disabled={!canEditBet || submitting || isAuthLoading}
                 >
                   {submitting ? (
                     <>

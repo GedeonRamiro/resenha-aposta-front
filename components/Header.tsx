@@ -51,7 +51,7 @@ export function Header() {
               alt="Logo"
               width={60}
               height={60}
-              className="rounded"
+              className="h-15 w-15 rounded"
               priority
             />
           </Link>

@@ -8,7 +8,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
-import { getGameById, updateGameById } from "@/lib/games";
+import {
+  formatOptionalScoreInput,
+  getGameById,
+  parseOptionalScoreInput,
+  updateGameById,
+} from "@/lib/games";
 import { GameStatus } from "@/enums/game-status";
 import { useBackendUser } from "@/lib/useBackendUser";
 
@@ -46,27 +51,21 @@ export default function EditGame() {
       try {
         const data = await getGameById(id);
         setInitialData({
-          homeTeam: data.homeTeam,
-          awayTeam: data.awayTeam,
           homeTeamId: data.homeTeamId ?? undefined,
           awayTeamId: data.awayTeamId ?? undefined,
-          homeTeamLogo: data.homeTeamLogo ?? undefined,
-          awayTeamLogo: data.awayTeamLogo ?? undefined,
-          competition: data.competition ?? undefined,
           competitionId: data.competitionId ?? undefined,
           gameDate: formatDateTimeLocal(data.gameDate),
           gameType:
             (data.gameType as "LEAGUE_GROUP" | "KNOCKOUT" | undefined) ??
             "LEAGUE_GROUP",
-          tieId: data.tieId ?? undefined,
-          tieLegsCount: data.legNumber ? 2 : 1,
-          legNumber: data.legNumber ?? undefined,
           moreInfo: data.moreInfo ?? undefined,
           status: data.status as GameStatus,
           homeScore: data.homeScore ?? undefined,
           awayScore: data.awayScore ?? undefined,
           penaltyHomeScore: data.penaltyHomeScore ?? undefined,
           penaltyAwayScore: data.penaltyAwayScore ?? undefined,
+          secondLegHomeScore: formatOptionalScoreInput(data.secondLegHomeScore),
+          secondLegAwayScore: formatOptionalScoreInput(data.secondLegAwayScore),
         });
       } catch {
         toast.error("Erro ao carregar jogo");
@@ -84,13 +83,38 @@ export default function EditGame() {
     if (!id || submittingRef.current || isSubmitting) return;
 
     try {
+      const secondLegHomeScore = parseOptionalScoreInput(
+        data.secondLegHomeScore,
+      );
+      const secondLegAwayScore = parseOptionalScoreInput(
+        data.secondLegAwayScore,
+      );
+
       submittingRef.current = true;
       setIsSubmitting(true);
-      await updateGameById(id, data);
+      await updateGameById(id, {
+        homeTeamId: data.homeTeamId,
+        awayTeamId: data.awayTeamId,
+        competitionId: data.competitionId,
+        gameDate: data.gameDate,
+        gameType: data.gameType,
+        moreInfo: data.moreInfo,
+        status: data.status,
+        homeScore: data.homeScore,
+        awayScore: data.awayScore,
+        penaltyHomeScore: data.penaltyHomeScore,
+        penaltyAwayScore: data.penaltyAwayScore,
+        secondLegHomeScore,
+        secondLegAwayScore,
+      });
       toast.success("Jogo atualizado!");
       router.push("/games");
-    } catch {
-      toast.error("Erro ao atualizar jogo");
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Erro ao atualizar jogo";
+      toast.error(message);
 
       setIsSubmitting(false);
       submittingRef.current = false;
