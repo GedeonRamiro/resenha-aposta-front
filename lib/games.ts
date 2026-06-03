@@ -8,26 +8,40 @@ export interface GamesApiResponse extends IPagination {
 export type GamePayload = {
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: string;
+  awayTeamId?: string;
   homeTeamLogo?: string;
   awayTeamLogo?: string;
   competition?: string;
+  competitionId?: string;
   gameDate: string;
-  betCloseAt: string;
+  gameType?: "LEAGUE_GROUP" | "KNOCKOUT";
+  tieId?: string;
+  tieLegsCount?: number;
+  legNumber?: number;
   moreInfo?: string;
   status?: string;
   homeScore?: number;
   awayScore?: number;
+  penaltyHomeScore?: number;
+  penaltyAwayScore?: number;
 };
 
 type CreateGamePayload = Pick<
   GamePayload,
   | "homeTeam"
   | "awayTeam"
+  | "homeTeamId"
+  | "awayTeamId"
   | "homeTeamLogo"
   | "awayTeamLogo"
   | "competition"
+  | "competitionId"
   | "gameDate"
-  | "betCloseAt"
+  | "gameType"
+  | "tieId"
+  | "tieLegsCount"
+  | "legNumber"
   | "moreInfo"
 >;
 
@@ -65,14 +79,26 @@ function sanitizeCreateGamePayload(payload: GamePayload): CreateGamePayload {
   const moreInfo = payload.moreInfo?.trim();
   const homeTeamLogo = payload.homeTeamLogo?.trim();
   const awayTeamLogo = payload.awayTeamLogo?.trim();
+  const tieId = payload.tieId?.trim();
+  const homeTeamId = payload.homeTeamId?.trim();
+  const awayTeamId = payload.awayTeamId?.trim();
+  const competitionId = payload.competitionId?.trim();
+  const gameType = payload.gameType ?? "LEAGUE_GROUP";
 
   return {
     homeTeam: payload.homeTeam,
     awayTeam: payload.awayTeam,
+    homeTeamId: homeTeamId ? homeTeamId : undefined,
+    awayTeamId: awayTeamId ? awayTeamId : undefined,
     homeTeamLogo: homeTeamLogo ? homeTeamLogo : undefined,
     awayTeamLogo: awayTeamLogo ? awayTeamLogo : undefined,
+    competitionId: competitionId ? competitionId : undefined,
     gameDate: toApiIsoDateTime(payload.gameDate, "Data do jogo"),
-    betCloseAt: toApiIsoDateTime(payload.betCloseAt, "Data de fechamento"),
+    gameType,
+    tieId: gameType === "KNOCKOUT" && tieId ? tieId : undefined,
+    tieLegsCount:
+      gameType === "KNOCKOUT" ? (payload.tieLegsCount ?? 1) : undefined,
+    legNumber: gameType === "KNOCKOUT" ? payload.legNumber : undefined,
     competition: competition ? competition : undefined,
     moreInfo: moreInfo ? moreInfo : undefined,
   };
@@ -81,21 +107,31 @@ function sanitizeCreateGamePayload(payload: GamePayload): CreateGamePayload {
 function sanitizeUpdateGamePayload(
   payload: GameUpdatePayload,
 ): GameUpdatePayload {
+  const gameType = payload.gameType;
+  const tieId =
+    typeof payload.tieId === "string" ? payload.tieId.trim() : undefined;
+
   const sanitizedPayload: GameUpdatePayload = {
     ...payload,
+    tieId: tieId ? tieId : undefined,
+    homeTeamId:
+      typeof payload.homeTeamId === "string" && payload.homeTeamId.trim()
+        ? payload.homeTeamId.trim()
+        : undefined,
+    awayTeamId:
+      typeof payload.awayTeamId === "string" && payload.awayTeamId.trim()
+        ? payload.awayTeamId.trim()
+        : undefined,
+    competitionId:
+      typeof payload.competitionId === "string" && payload.competitionId.trim()
+        ? payload.competitionId.trim()
+        : undefined,
   };
 
   if (payload.gameDate) {
     sanitizedPayload.gameDate = toApiIsoDateTime(
       payload.gameDate,
       "Data do jogo",
-    );
-  }
-
-  if (payload.betCloseAt) {
-    sanitizedPayload.betCloseAt = toApiIsoDateTime(
-      payload.betCloseAt,
-      "Data de fechamento",
     );
   }
 
@@ -107,6 +143,14 @@ function sanitizeUpdateGamePayload(
   if (typeof payload.awayTeamLogo === "string") {
     const awayTeamLogo = payload.awayTeamLogo.trim();
     sanitizedPayload.awayTeamLogo = awayTeamLogo ? awayTeamLogo : undefined;
+  }
+
+  if (gameType && gameType !== "KNOCKOUT") {
+    sanitizedPayload.tieId = undefined;
+    sanitizedPayload.tieLegsCount = undefined;
+    sanitizedPayload.legNumber = undefined;
+    sanitizedPayload.penaltyHomeScore = undefined;
+    sanitizedPayload.penaltyAwayScore = undefined;
   }
 
   return sanitizedPayload;

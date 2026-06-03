@@ -1,54 +1,75 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-
-type PeriodKey = "geral" | "abril" | "maio";
+import { APP_CONFIG_UPDATED_EVENT, getConfig } from "@/lib/config";
 
 interface PeriodFilter {
+  key: string;
   label: string;
   startDate?: string;
   endDate?: string;
 }
 
-const PERIOD_FILTERS: Record<PeriodKey, PeriodFilter> = {
-  geral: { label: "Geral" },
-  abril: {
-    label: "Abril",
-    startDate: "2026-04-03",
-    endDate: "2026-04-26",
-  },
-  maio: {
-    label: "Maio",
-    startDate: "2026-05-01",
-    endDate: "2026-05-25",
-  },
-};
-
 export function PeriodFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [periodFilters, setPeriodFilters] = useState<PeriodFilter[]>([
+    { key: "geral", label: "Geral" },
+  ]);
+
+  const loadPeriodFilters = useCallback(() => {
+    getConfig()
+      .then((config) => {
+        const seasons = (config.rankingSeasons ?? []).map((season) => ({
+          key: season.slug,
+          label: season.label,
+          startDate: season.startDate,
+          endDate: season.endDate,
+        }));
+
+        setPeriodFilters([{ key: "geral", label: "Geral" }, ...seasons]);
+      })
+      .catch(() => {
+        setPeriodFilters([{ key: "geral", label: "Geral" }]);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadPeriodFilters();
+    window.addEventListener(APP_CONFIG_UPDATED_EVENT, loadPeriodFilters);
+
+    return () => {
+      window.removeEventListener(APP_CONFIG_UPDATED_EVENT, loadPeriodFilters);
+    };
+  }, [loadPeriodFilters]);
 
   const currentStart = searchParams.get("startDate") || "";
   const currentEnd = searchParams.get("endDate") || "";
-  const currentPeriod = searchParams.get("period") as PeriodKey | null;
+  const currentPeriod = searchParams.get("period");
 
-  const selectedPeriod: PeriodKey | undefined = (() => {
-    if (currentPeriod && currentPeriod in PERIOD_FILTERS) {
-      return currentPeriod;
+  const selectedPeriod = useMemo(() => {
+    if (currentPeriod) {
+      const byPeriod = periodFilters.find(
+        (period) => period.key === currentPeriod,
+      );
+      if (byPeriod) return byPeriod.key;
     }
 
-    const fromDates = (Object.keys(PERIOD_FILTERS) as PeriodKey[]).find(
-      (key) =>
-        (PERIOD_FILTERS[key].startDate || "") === currentStart &&
-        (PERIOD_FILTERS[key].endDate || "") === currentEnd,
+    const byDates = periodFilters.find(
+      (period) =>
+        (period.startDate || "") === currentStart &&
+        (period.endDate || "") === currentEnd,
     );
 
-    return fromDates;
-  })();
+    return byDates?.key ?? "geral";
+  }, [currentEnd, currentPeriod, currentStart, periodFilters]);
 
-  const handleFilterChange = (period: PeriodKey) => {
-    const selected = PERIOD_FILTERS[period];
+  const handleFilterChange = (period: string) => {
+    const selected = periodFilters.find((item) => item.key === period);
+    if (!selected) return;
+
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("period", period);
@@ -67,14 +88,14 @@ export function PeriodFilters() {
 
   return (
     <div className="flex gap-2 flex-wrap">
-      {(Object.keys(PERIOD_FILTERS) as PeriodKey[]).map((period) => {
-        const filter = PERIOD_FILTERS[period];
+      {periodFilters.map((period) => {
+        const filter = period;
 
         return (
           <Button
-            key={period}
-            variant={selectedPeriod === period ? "default" : "outline"}
-            onClick={() => handleFilterChange(period)}
+            key={period.key}
+            variant={selectedPeriod === period.key ? "default" : "outline"}
+            onClick={() => handleFilterChange(period.key)}
           >
             {filter.label}
           </Button>

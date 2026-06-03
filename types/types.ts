@@ -1,17 +1,25 @@
 export interface IDataGame {
   awayScore: number | null;
+  penaltyAwayScore: number | null;
   awayTeam: string;
   awayTeamLogo: string | null;
   betCloseAt: string;
   competition: string | null;
   createdAt: string;
+  gameType: string;
   gameDate: string;
   homeScore: number | null;
+  penaltyHomeScore: number | null;
   homeTeam: string;
+  homeTeamId: string | null;
   homeTeamLogo: string | null;
   id: string;
+  legNumber: number | null;
   moreInfo: string | null;
   status: string;
+  tieId: string | null;
+  awayTeamId: string | null;
+  competitionId: string | null;
   updatedAt: string;
 }
 

@@ -48,15 +48,25 @@ export default function EditGame() {
         setInitialData({
           homeTeam: data.homeTeam,
           awayTeam: data.awayTeam,
+          homeTeamId: data.homeTeamId ?? undefined,
+          awayTeamId: data.awayTeamId ?? undefined,
           homeTeamLogo: data.homeTeamLogo ?? undefined,
           awayTeamLogo: data.awayTeamLogo ?? undefined,
           competition: data.competition ?? undefined,
+          competitionId: data.competitionId ?? undefined,
           gameDate: formatDateTimeLocal(data.gameDate),
-          betCloseAt: formatDateTimeLocal(data.betCloseAt),
+          gameType:
+            (data.gameType as "LEAGUE_GROUP" | "KNOCKOUT" | undefined) ??
+            "LEAGUE_GROUP",
+          tieId: data.tieId ?? undefined,
+          tieLegsCount: data.legNumber ? 2 : 1,
+          legNumber: data.legNumber ?? undefined,
           moreInfo: data.moreInfo ?? undefined,
           status: data.status as GameStatus,
           homeScore: data.homeScore ?? undefined,
           awayScore: data.awayScore ?? undefined,
+          penaltyHomeScore: data.penaltyHomeScore ?? undefined,
+          penaltyAwayScore: data.penaltyAwayScore ?? undefined,
         });
       } catch {
         toast.error("Erro ao carregar jogo");

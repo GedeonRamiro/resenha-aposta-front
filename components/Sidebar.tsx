@@ -1,10 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSidebarStore } from "@/components/sidebar-store";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useBackendUser } from "@/lib/useBackendUser";
+import {
+  APP_CONFIG_UPDATED_EVENT,
+  getConfig,
+  RankingSeason,
+} from "@/lib/config";
 import { cn } from "@/lib/utils";
 import {
   Sidebar as SidebarRoot,
@@ -20,9 +25,23 @@ import {
   FiUsers,
   FiBookOpen,
   FiBarChart2,
+  FiSettings,
 } from "react-icons/fi";
 import { FaRegFutbol } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
+
+type RankingSubItem = {
+  label: string;
+  href: string;
+};
+
+function seasonToHref(season: RankingSeason) {
+  const params = new URLSearchParams();
+  params.set("period", season.slug);
+  params.set("startDate", season.startDate);
+  params.set("endDate", season.endDate);
+  return `/user-scores?${params.toString()}`;
+}
 
 const menuItems = [
   { label: "Início", href: "/", icon: <FiHome /> },
@@ -40,34 +59,56 @@ const menuItems = [
     label: "Ranking",
     href: "/user-scores",
     icon: <FiTable />,
-    subItems: [
-      { label: "Geral", href: "/user-scores?period=geral" },
-      {
-        label: "Abril",
-        href: "/user-scores?period=abril&startDate=2026-04-03&endDate=2026-04-26",
-      },
-      {
-        label: "Maio",
-        href: "/user-scores?period=maio&startDate=2026-05-01&endDate=2026-05-25",
-      },
-    ],
+    subItems: [{ label: "Geral", href: "/user-scores?period=geral" }],
   },
 ];
 
 export function Sidebar() {
   const { open, closeSidebar } = useSidebarStore();
-  const { isAuthenticated } = useBackendUser();
+  const { isAuthenticated, isAdmin } = useBackendUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentPeriod = searchParams.get("period") || "geral";
   const isRankingRoute = pathname.startsWith("/user-scores");
   const [isRankingOpen, setIsRankingOpen] = useState(isRankingRoute);
+  const [rankingSubItems, setRankingSubItems] = useState<RankingSubItem[]>([
+    { label: "Geral", href: "/user-scores?period=geral" },
+  ]);
+
+  const loadRankingSubItems = useCallback(() => {
+    getConfig()
+      .then((config) => {
+        const seasons = (config.rankingSeasons ?? []).map((season) => ({
+          label: season.label,
+          href: seasonToHref(season),
+        }));
+
+        setRankingSubItems([
+          { label: "Geral", href: "/user-scores?period=geral" },
+          ...seasons,
+        ]);
+      })
+      .catch(() => {
+        setRankingSubItems([
+          { label: "Geral", href: "/user-scores?period=geral" },
+        ]);
+      });
+  }, []);
 
   useEffect(() => {
     if (isRankingRoute) {
       setIsRankingOpen(true);
     }
   }, [isRankingRoute]);
+
+  useEffect(() => {
+    loadRankingSubItems();
+    window.addEventListener(APP_CONFIG_UPDATED_EVENT, loadRankingSubItems);
+
+    return () => {
+      window.removeEventListener(APP_CONFIG_UPDATED_EVENT, loadRankingSubItems);
+    };
+  }, [loadRankingSubItems]);
 
   return (
     <>
@@ -97,7 +138,7 @@ export function Sidebar() {
                   ? pathname.startsWith("/user-scores")
                   : pathname === item.href;
 
-              if (item.href === "/user-scores" && item.subItems) {
+              if (item.href === "/user-scores") {
                 return (
                   <div key={item.href}>
                     <Button
@@ -132,7 +173,7 @@ export function Sidebar() {
                       )}
                     >
                       <div className="flex flex-col gap-1 py-1">
-                        {item.subItems.map((subItem) => {
+                        {rankingSubItems.map((subItem) => {
                           const isCurrentSubItem =
                             pathname.startsWith("/user-scores") &&
                             subItem.href.includes(`period=${currentPeriod}`);
@@ -188,6 +229,31 @@ export function Sidebar() {
               );
             })}
           </SidebarGroup>
+
+          {isAdmin && (
+            <SidebarGroup className="border-t border-primary/20 pt-2">
+              <Button
+                asChild
+                variant="ghost"
+                className={cn(
+                  "justify-start gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === "/settings"
+                    ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                    : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                )}
+                onClick={closeSidebar}
+              >
+                <Link
+                  href="/settings"
+                  aria-current={pathname === "/settings" ? "page" : undefined}
+                  className="flex flex-1 items-center gap-3"
+                >
+                  <FiSettings />
+                  Configurações
+                </Link>
+              </Button>
+            </SidebarGroup>
+          )}
         </SidebarContent>
       </SidebarRoot>
 

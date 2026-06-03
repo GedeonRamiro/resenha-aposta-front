@@ -12,6 +12,7 @@ import { CreateBetSheet } from "../components/CreateBetSheet";
 import { GameAdminActions } from "../components/GameAdminActions";
 import { GenerateInfoButton } from "../components/GenerateInfoButton";
 import { TeamLogo } from "@/components/TeamLogo";
+import { CreateTieBetSheet } from "../components/CreateTieBetSheet";
 
 export default async function GameDetails({
   params,
@@ -136,6 +137,26 @@ export default async function GameDetails({
 
             <div>
               <label className="text-sm font-medium text-muted-foreground">
+                Tipo de jogo
+              </label>
+              <p className="text-lg">
+                {game.gameType === "KNOCKOUT" ? "Mata-mata" : "Liga/Grupos"}
+              </p>
+            </div>
+
+            {game.gameType === "KNOCKOUT" && game.legNumber ? (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Fase do confronto
+                </label>
+                <p className="text-lg">
+                  {game.legNumber === 1 ? "Ida" : "Volta"}
+                </p>
+              </div>
+            ) : null}
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">
                 Apostas fecham em
               </label>
               <p className="text-lg">
@@ -155,6 +176,19 @@ export default async function GameDetails({
               </div>
             )}
 
+            {game.gameType === "KNOCKOUT" &&
+            typeof game.penaltyHomeScore === "number" &&
+            typeof game.penaltyAwayScore === "number" ? (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Pênaltis
+                </label>
+                <p className="text-lg">
+                  {game.penaltyHomeScore} x {game.penaltyAwayScore}
+                </p>
+              </div>
+            ) : null}
+
             <GenerateInfoButton
               gameId={game.id}
               initialMoreInfo={game.moreInfo}
@@ -163,6 +197,12 @@ export default async function GameDetails({
             {game.status === "SCHEDULED" && (
               <div className="pt-6">
                 <CreateBetSheet game={game} />
+              </div>
+            )}
+
+            {game.gameType === "KNOCKOUT" && game.tieId && (
+              <div className="pt-3">
+                <CreateTieBetSheet game={game} />
               </div>
             )}
 

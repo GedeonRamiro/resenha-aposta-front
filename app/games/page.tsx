@@ -13,6 +13,7 @@ import { GameAdminActions } from "./components/GameAdminActions";
 import { GameInfoModalAction } from "./components/GameInfoModalAction";
 import { CreateGameAdminButton } from "./components/CreateGameAdminButton";
 import { TeamLogo } from "@/components/TeamLogo";
+import { CreateTieBetSheet } from "./components/CreateTieBetSheet";
 
 const surfaceCardClassName =
   "border border-primary/25 bg-linear-to-b from-primary/8 via-card to-primary/4 shadow-[0_20px_55px_-44px_rgba(234,88,12,0.55)] ring-primary/20";
@@ -152,6 +153,11 @@ export default async function Games({
               {game.status === "SCHEDULED" && (
                 <div className="w-full mt-4">
                   <CreateBetSheet game={game} />
+                </div>
+              )}
+              {game.gameType === "KNOCKOUT" && game.tieId && (
+                <div className="w-full mt-2">
+                  <CreateTieBetSheet game={game} />
                 </div>
               )}
               <div className="mt-4 flex items-center justify-end gap-2">

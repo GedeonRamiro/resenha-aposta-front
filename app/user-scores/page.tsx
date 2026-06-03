@@ -11,7 +11,7 @@ export default async function UserScoresPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    period?: "geral" | "abril" | "maio";
+    period?: string;
     startDate?: string;
     endDate?: string;
   }>;

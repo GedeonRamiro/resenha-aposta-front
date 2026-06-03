@@ -18,7 +18,6 @@ export type UserBetSummary = {
 };
 
 export type CreateBetPayload = {
-  userId: string;
   gameId: string;
   option: ApiBetOption;
 };

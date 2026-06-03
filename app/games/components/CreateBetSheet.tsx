@@ -156,7 +156,6 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
         toast.success("Aposta atualizada com sucesso!");
       } else {
         const createdBet = await createBet({
-          userId: backendUser.id,
           gameId: game.id,
           option,
         });
