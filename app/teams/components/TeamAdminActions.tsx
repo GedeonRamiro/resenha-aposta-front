@@ -7,9 +7,10 @@ import { TeamFormDialog } from "./TeamFormDialog";
 
 type TeamAdminActionsProps = {
   team: Team;
+  onSaved?: () => void;
 };
 
-export function TeamAdminActions({ team }: TeamAdminActionsProps) {
+export function TeamAdminActions({ team, onSaved }: TeamAdminActionsProps) {
   const { isAdmin, isLoading } = useBackendUser();
 
   if (isLoading || !isAdmin) {
@@ -18,7 +19,7 @@ export function TeamAdminActions({ team }: TeamAdminActionsProps) {
 
   return (
     <div className="flex items-center justify-end gap-4">
-      <TeamFormDialog mode="edit" team={team} />
+      <TeamFormDialog mode="edit" team={team} onSaved={onSaved} />
       <ConfirmAction
         id={team.id}
         endpoint="/teams"

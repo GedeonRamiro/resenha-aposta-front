@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, Pencil, PlusCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,14 +25,15 @@ type CompetitionFormDialogProps =
   | {
       mode: "create";
       competition?: never;
+      onSaved?: () => void;
     }
   | {
       mode: "edit";
       competition: Competition;
+      onSaved?: () => void;
     };
 
 export function CompetitionFormDialog(props: CompetitionFormDialogProps) {
-  const router = useRouter();
   const { isAdmin, isLoading } = useBackendUser();
   const canManage = isAdmin;
   const [open, setOpen] = useState(false);
@@ -89,12 +89,12 @@ export function CompetitionFormDialog(props: CompetitionFormDialogProps) {
         setName("");
         setLogoUrl("");
       }
+      props.onSaved?.();
       toast.success(
         props.mode === "create"
           ? "Competição criada com sucesso!"
           : "Competição atualizada com sucesso!",
       );
-      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erro ao salvar competição.",

@@ -7,10 +7,12 @@ import { CompetitionFormDialog } from "./CompetitionFormDialog";
 
 type CompetitionAdminActionsProps = {
   competition: Competition;
+  onSaved?: () => void;
 };
 
 export function CompetitionAdminActions({
   competition,
+  onSaved,
 }: CompetitionAdminActionsProps) {
   const { isAdmin, isLoading } = useBackendUser();
 
@@ -20,7 +22,11 @@ export function CompetitionAdminActions({
 
   return (
     <div className="flex items-center justify-end gap-4">
-      <CompetitionFormDialog mode="edit" competition={competition} />
+      <CompetitionFormDialog
+        mode="edit"
+        competition={competition}
+        onSaved={onSaved}
+      />
       <ConfirmAction
         id={competition.id}
         endpoint="/competitions"

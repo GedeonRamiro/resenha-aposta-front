@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, PlusCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,14 +21,15 @@ type TeamFormDialogProps =
   | {
       mode: "create";
       team?: never;
+      onSaved?: () => void;
     }
   | {
       mode: "edit";
       team: Team;
+      onSaved?: () => void;
     };
 
 export function TeamFormDialog(props: TeamFormDialogProps) {
-  const router = useRouter();
   const { isAdmin, isLoading } = useBackendUser();
   const canManage = isAdmin;
   const [open, setOpen] = useState(false);
@@ -85,12 +85,12 @@ export function TeamFormDialog(props: TeamFormDialogProps) {
         setName("");
         setLogoUrl("");
       }
+      props.onSaved?.();
       toast.success(
         props.mode === "create"
           ? "Time criado com sucesso!"
           : "Time atualizado com sucesso!",
       );
-      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erro ao salvar time.",

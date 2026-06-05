@@ -30,6 +30,7 @@ export default function TeamsPageClient() {
     prevPage: number | null;
   } | null>(null);
   const [isFetching, setIsFetching] = useState(true);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -81,7 +82,11 @@ export default function TeamsPageClient() {
     return () => {
       mounted = false;
     };
-  }, [safeCurrentPage, isAdmin, isAuthLoading]);
+  }, [safeCurrentPage, isAdmin, isAuthLoading, reloadTick]);
+
+  function handleSaved() {
+    setReloadTick((current) => current + 1);
+  }
 
   if (isAuthLoading || !isAdmin) {
     return null;
@@ -96,7 +101,7 @@ export default function TeamsPageClient() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle>Times cadastrados</CardTitle>
-          <TeamFormDialog mode="create" />
+          <TeamFormDialog mode="create" onSaved={handleSaved} />
         </CardHeader>
 
         <CardContent>
@@ -129,7 +134,7 @@ export default function TeamsPageClient() {
                     </div>
 
                     <div className="mt-auto">
-                      <TeamAdminActions team={team} />
+                      <TeamAdminActions team={team} onSaved={handleSaved} />
                     </div>
                   </CardContent>
                 </Card>

@@ -30,6 +30,7 @@ export default function CompetitionsPageClient() {
     prevPage: number | null;
   } | null>(null);
   const [isFetching, setIsFetching] = useState(true);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -81,7 +82,11 @@ export default function CompetitionsPageClient() {
     return () => {
       mounted = false;
     };
-  }, [safeCurrentPage, isAdmin, isAuthLoading]);
+  }, [safeCurrentPage, isAdmin, isAuthLoading, reloadTick]);
+
+  function handleSaved() {
+    setReloadTick((current) => current + 1);
+  }
 
   if (isAuthLoading || !isAdmin) {
     return null;
@@ -96,7 +101,7 @@ export default function CompetitionsPageClient() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle>Competições cadastradas</CardTitle>
-          <CompetitionFormDialog mode="create" />
+          <CompetitionFormDialog mode="create" onSaved={handleSaved} />
         </CardHeader>
 
         <CardContent>
@@ -133,7 +138,10 @@ export default function CompetitionsPageClient() {
                     </div>
 
                     <div className="mt-auto">
-                      <CompetitionAdminActions competition={competition} />
+                      <CompetitionAdminActions
+                        competition={competition}
+                        onSaved={handleSaved}
+                      />
                     </div>
                   </CardContent>
                 </Card>
