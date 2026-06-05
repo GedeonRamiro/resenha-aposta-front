@@ -10,9 +10,9 @@ type TeamAdminActionsProps = {
 };
 
 export function TeamAdminActions({ team }: TeamAdminActionsProps) {
-  const { isAdmin, isModerator, isLoading } = useBackendUser();
+  const { isAdmin, isLoading } = useBackendUser();
 
-  if (isLoading || (!isAdmin && !isModerator)) {
+  if (isLoading || !isAdmin) {
     return null;
   }
 

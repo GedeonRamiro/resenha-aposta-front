@@ -62,8 +62,6 @@ export default async function Games({
 
   if (!Array.isArray(games?.data)) return null;
 
-  console.log("Games data:", games.data);
-
   return (
     <>
       <TiTleSeparator title="Todos os Jogos" />

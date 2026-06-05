@@ -25,10 +25,44 @@ export default async function Home() {
     rankingResult.status === "fulfilled" ? rankingResult.value : null;
   const posts = postsResult.status === "fulfilled" ? postsResult.value : null;
 
-  const topGames = games?.data?.slice(0, 10) ?? [];
-  const topBets = bets?.data?.slice(0, 100) ?? [];
+  const todayGames = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
+
+  const gamesToday =
+    games?.data?.filter((game) => {
+      const gameDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+      }).format(new Date(game.gameDate));
+
+      return gameDate === todayGames;
+    }) ?? [];
+
+  const todayBets = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
+
+  const betsToday =
+    bets?.data?.filter((bet) => {
+      const betDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+      }).format(new Date(bet.game.gameDate));
+
+      return betDate === todayBets;
+    }) ?? [];
+
+  const topGames =
+    gamesToday.length > 0 ? gamesToday : (games?.data?.slice(0, 10) ?? []);
+
+  const topBets =
+    betsToday.length > 0 ? betsToday : (bets?.data?.slice(0, 100) ?? []);
+
+  //const topGames = games?.data?.slice(0, 10) ?? [];
+  //const topBets = bets?.data?.slice(0, 100) ?? [];
   const topRanking = ranking?.slice(0, 5) ?? [];
   const latestPosts = posts?.data?.slice(0, 5) ?? [];
+
+  console.log(topBets);
 
   return (
     <div className="space-y-8 pb-6">

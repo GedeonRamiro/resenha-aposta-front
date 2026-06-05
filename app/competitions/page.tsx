@@ -1,45 +1,93 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import PaginationShadcn from "@/components/PaginationShadcn";
 import { CompetitionLogo } from "@/components/CompetitionLogo";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getCompetitions } from "@/lib/competitions";
+import { Competition, getCompetitions } from "@/lib/competitions";
+import { useBackendUser } from "@/lib/useBackendUser";
 import { CompetitionAdminActions } from "./components/CompetitionAdminActions";
 import { CompetitionFormDialog } from "./components/CompetitionFormDialog";
 
-export default async function CompetitionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-  }>;
-}) {
-  const params = await searchParams;
-  const currentPage = Number.parseInt(params.page ?? "1");
+export default function CompetitionsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAdmin, isLoading: isAuthLoading } = useBackendUser();
 
-  let competitions = null;
-  let competitionsError = "";
+  const currentPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
+  const safeCurrentPage =
+    Number.isNaN(currentPage) || currentPage < 1 ? 1 : currentPage;
 
-  try {
-    competitions = await getCompetitions(currentPage);
-  } catch (error: unknown) {
-    competitionsError =
-      error instanceof Error
-        ? error.message
-        : "Não foi possível carregar a lista de competições.";
+  const [competitionData, setCompetitionData] = useState<Competition[]>([]);
+  const [competitionsError, setCompetitionsError] = useState("");
+  const [pagination, setPagination] = useState<{
+    count: number;
+    nextPage: number | null;
+    lastPage: number | null;
+    prevPage: number | null;
+  } | null>(null);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!isAdmin) {
+      router.replace("/");
+    }
+  }, [isAdmin, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthLoading || !isAdmin) return;
+
+    let mounted = true;
+
+    async function fetchCompetitions() {
+      try {
+        setIsFetching(true);
+        setCompetitionsError("");
+
+        const response = await getCompetitions(safeCurrentPage);
+        if (!mounted) return;
+
+        setCompetitionData(response.data ?? []);
+        setPagination({
+          count: response.count,
+          nextPage: response.nextPage,
+          lastPage: response.lastPage,
+          prevPage: response.prevPage,
+        });
+      } catch (error: unknown) {
+        if (!mounted) return;
+
+        setCompetitionData([]);
+        setPagination(null);
+        setCompetitionsError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar a lista de competições.",
+        );
+      } finally {
+        if (mounted) {
+          setIsFetching(false);
+        }
+      }
+    }
+
+    fetchCompetitions();
+
+    return () => {
+      mounted = false;
+    };
+  }, [safeCurrentPage, isAdmin, isAuthLoading]);
+
+  if (isAuthLoading || !isAdmin) {
+    return null;
   }
 
-  const hasCompetitionList = Boolean(
-    competitions && Array.isArray(competitions.data),
-  );
-  const competitionData = competitions?.data ?? [];
+  const hasCompetitionList = !isFetching;
 
   return (
     <>
@@ -50,6 +98,7 @@ export default async function CompetitionsPage({
           <CardTitle>Competições cadastradas</CardTitle>
           <CompetitionFormDialog mode="create" />
         </CardHeader>
+
         <CardContent>
           {competitionsError ? (
             <p className="text-sm text-red-600">{competitionsError}</p>
@@ -64,32 +113,32 @@ export default async function CompetitionsPage({
               Nenhuma competição cadastrada.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Competição</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {competitionData.map((competition) => (
-                  <TableRow key={competition.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <CompetitionLogo
-                          competitionName={competition.name}
-                          logoUrl={competition.logoUrl}
-                        />
-                        <span className="truncate">{competition.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {competitionData.map((competition) => (
+                <Card
+                  key={competition.id}
+                  className="transition-all hover:shadow-md"
+                >
+                  <CardContent className="flex flex-col items-center">
+                    <h3 className="line-clamp-2 text-center text-sm font-medium">
+                      {competition.name}
+                    </h3>
+
+                    <div className="flex min-h-24 items-center justify-center">
+                      <CompetitionLogo
+                        competitionName={competition.name}
+                        logoUrl={competition.logoUrl}
+                        className="h-20 w-20"
+                      />
+                    </div>
+
+                    <div className="mt-auto">
                       <CompetitionAdminActions competition={competition} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -97,11 +146,11 @@ export default async function CompetitionsPage({
       {hasCompetitionList && competitionData.length !== 0 ? (
         <div className="py-4">
           <PaginationShadcn
-            count={competitions?.count}
-            currentPage={currentPage}
-            nextPage={competitions?.nextPage}
-            lastPage={competitions?.lastPage}
-            prevPage={competitions?.prevPage}
+            count={pagination?.count}
+            currentPage={safeCurrentPage}
+            nextPage={pagination?.nextPage}
+            lastPage={pagination?.lastPage}
+            prevPage={pagination?.prevPage}
           />
         </div>
       ) : null}

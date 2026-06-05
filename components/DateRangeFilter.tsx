@@ -95,6 +95,7 @@ export function DateRangeFilter() {
 
     params.delete("startDate");
     params.delete("endDate");
+    params.delete("quickFilter");
     params.set("page", "1");
 
     router.push(`?${params.toString()}`);
@@ -107,6 +108,7 @@ export function DateRangeFilter() {
 
     params.set("startDate", toLocalStartOfDayIso(range.from));
     params.set("endDate", toLocalEndExclusiveIso(range.to));
+    params.delete("quickFilter");
     params.set("page", "1");
 
     router.push(`?${params.toString()}`);

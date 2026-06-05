@@ -15,19 +15,25 @@ export type TeamsApiResponse = IPagination & {
 
 export async function getTeams(
   page: number,
-  limit = 10,
+  limit = 50,
 ): Promise<TeamsApiResponse> {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
   });
 
-  const response = await fetch(
-    `${getApiBaseUrl()}/teams?${params.toString()}`,
-    {
+  const timeoutSignal = AbortSignal.timeout(12_000);
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${getApiBaseUrl()}/teams?${params.toString()}`, {
       cache: "no-store",
-    },
-  );
+      signal: timeoutSignal,
+    });
+  } catch {
+    throw new Error("A API de times demorou para responder. Tente novamente.");
+  }
 
   if (!response.ok) {
     throw new Error("Falha ao carregar times");

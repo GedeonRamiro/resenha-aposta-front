@@ -63,6 +63,10 @@ export default function EditBetPage() {
   const isMarketOpen = bet?.game.status === "SCHEDULED";
   const betResult = bet ? getBetResultLabel(bet) : null;
   const isOwner = Boolean(bet && backendUser?.id === bet.userId);
+  const availableOptions =
+    bet?.game.gameType === "KNOCKOUT"
+      ? BET_OPTIONS.filter((betOption) => betOption !== "DRAW")
+      : BET_OPTIONS;
   const canEditBet = Boolean(
     bet && isAuthenticated && canPlaceBets && isOwner && isMarketOpen,
   );
@@ -77,7 +81,11 @@ export default function EditBetPage() {
       try {
         const data = await getBetById(betId);
         setBet(data);
-        setOption(data.option as ApiBetOption);
+        if (data.game.gameType === "KNOCKOUT" && data.option === "DRAW") {
+          setOption("");
+        } else {
+          setOption(data.option as ApiBetOption);
+        }
       } catch {
         toast.error("Erro ao carregar aposta");
       } finally {
@@ -111,6 +119,11 @@ export default function EditBetPage() {
 
     if (!option) {
       toast.error("Selecione uma opção de aposta.");
+      return;
+    }
+
+    if (bet.game.gameType === "KNOCKOUT" && option === "DRAW") {
+      toast.error("Em jogos mata-mata, a opção empate não é permitida.");
       return;
     }
 
@@ -231,7 +244,7 @@ export default function EditBetPage() {
                       <SelectValue placeholder="Selecione uma opção" />
                     </SelectTrigger>
                     <SelectContent>
-                      {BET_OPTIONS.map((betOption) => (
+                      {availableOptions.map((betOption) => (
                         <SelectItem key={betOption} value={betOption}>
                           {getBetOptionText(betOption as ApiBetOption, bet)}
                         </SelectItem>

@@ -11,7 +11,7 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import {
   formatOptionalScoreInput,
   getGameById,
-  parseOptionalScoreInput,
+  parseOptionalScoreInputToNullable,
   updateGameById,
 } from "@/lib/games";
 import { GameStatus } from "@/enums/game-status";
@@ -83,12 +83,24 @@ export default function EditGame() {
     if (!id || submittingRef.current || isSubmitting) return;
 
     try {
-      const secondLegHomeScore = parseOptionalScoreInput(
+      const secondLegHomeScore = parseOptionalScoreInputToNullable(
         data.secondLegHomeScore,
       );
-      const secondLegAwayScore = parseOptionalScoreInput(
+      const secondLegAwayScore = parseOptionalScoreInputToNullable(
         data.secondLegAwayScore,
       );
+      const shouldCloseGameWhenClearingKnockoutScores =
+        data.gameType === "KNOCKOUT" &&
+        (secondLegHomeScore === null ||
+          secondLegAwayScore === null ||
+          data.penaltyHomeScore === undefined ||
+          data.penaltyAwayScore === undefined);
+
+      const nextStatus =
+        data.status === GameStatus.FINISHED &&
+        shouldCloseGameWhenClearingKnockoutScores
+          ? GameStatus.CLOSED
+          : data.status;
 
       submittingRef.current = true;
       setIsSubmitting(true);
@@ -99,11 +111,11 @@ export default function EditGame() {
         gameDate: data.gameDate,
         gameType: data.gameType,
         moreInfo: data.moreInfo,
-        status: data.status,
+        status: nextStatus,
         homeScore: data.homeScore,
         awayScore: data.awayScore,
-        penaltyHomeScore: data.penaltyHomeScore,
-        penaltyAwayScore: data.penaltyAwayScore,
+        penaltyHomeScore: data.penaltyHomeScore ?? null,
+        penaltyAwayScore: data.penaltyAwayScore ?? null,
         secondLegHomeScore,
         secondLegAwayScore,
       });

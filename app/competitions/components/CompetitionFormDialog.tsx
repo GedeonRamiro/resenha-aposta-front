@@ -34,8 +34,8 @@ type CompetitionFormDialogProps =
 
 export function CompetitionFormDialog(props: CompetitionFormDialogProps) {
   const router = useRouter();
-  const { isAdmin, isModerator, isLoading } = useBackendUser();
-  const canManage = isAdmin || isModerator;
+  const { isAdmin, isLoading } = useBackendUser();
+  const canManage = isAdmin;
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(
     props.mode === "edit" ? props.competition.name : "",

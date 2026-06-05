@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Pencil, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -30,8 +30,8 @@ type TeamFormDialogProps =
 
 export function TeamFormDialog(props: TeamFormDialogProps) {
   const router = useRouter();
-  const { isAdmin, isModerator, isLoading } = useBackendUser();
-  const canManage = isAdmin || isModerator;
+  const { isAdmin, isLoading } = useBackendUser();
+  const canManage = isAdmin;
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(
     props.mode === "edit" ? props.team.name : "",
@@ -110,7 +110,6 @@ export function TeamFormDialog(props: TeamFormDialogProps) {
           </Button>
         ) : (
           <Button type="button" variant="link" className="px-0">
-            <Pencil className="size-4" />
             Editar
           </Button>
         )}

@@ -45,13 +45,12 @@ export function Header() {
           >
             <FiSidebar size={24} />
           </Button>
-          <Link href="/">
+          <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
-              alt="Logo"
+              alt="Resenha Aposta"
               width={60}
               height={60}
-              className="h-15 w-15 rounded"
               priority
             />
           </Link>

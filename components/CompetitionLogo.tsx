@@ -34,10 +34,7 @@ export function CompetitionLogo({
       <img
         src={safeLogoUrl}
         alt={`Logo da competição ${competitionName}`}
-        className={cn(
-          "h-6 w-6 shrink-0 rounded-full object-contain",
-          className,
-        )}
+        className={cn("h-6 w-6 shrink-0  object-contain", className)}
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setHasLoadError(true)}

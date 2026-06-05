@@ -11,18 +11,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createBet, getBetsByUser, updateBetById } from "@/lib/bets";
 import { useBackendUser } from "@/lib/useBackendUser";
 import { IDataGame } from "@/types/types";
+import { TeamLogo } from "@/components/TeamLogo";
+import { cn } from "@/lib/utils";
 
 interface CreateBetSheetProps {
   game: IDataGame;
@@ -52,6 +47,9 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
   const [loading, setLoading] = useState(false);
   const [existingBetId, setExistingBetId] = useState<string | null>(null);
   const [isCheckingExistingBet, setIsCheckingExistingBet] = useState(false);
+
+  const selectedOptionClassName =
+    "border-orange-500/45 bg-orange-500/12 text-orange-700 dark:border-orange-400/45 dark:bg-orange-400/15 dark:text-orange-200";
 
   useEffect(() => {
     if (!backendUser?.id) {
@@ -144,7 +142,11 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
       <SheetTrigger asChild>
         <Button
           variant={existingBetId ? "secondary" : "default"}
-          className="w-full"
+          className={
+            existingBetId
+              ? "w-full border border-orange-500/35 bg-orange-500/12 text-orange-700 hover:bg-orange-500/18 dark:border-orange-400/40 dark:bg-orange-400/15 dark:text-orange-200 dark:hover:bg-orange-400/20"
+              : "w-full"
+          }
           disabled={isCheckingExistingBet || isLoading}
         >
           {existingBetId ? <Pencil className="size-4" /> : null}
@@ -174,27 +176,64 @@ export function CreateBetSheet({ game }: CreateBetSheetProps) {
         <div className="flex flex-col gap-6 py-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Opção</label>
-            <Select
-              value={selectedOption}
-              onValueChange={(value) => setSelectedOption(value as UIBetOption)}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isKnockoutGame
-                      ? "Selecione quem avança"
-                      : "Selecione a opção"
-                  }
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSelectedOption("1")}
+                className={cn(
+                  "h-auto justify-start gap-2 px-3 py-3",
+                  selectedOption === "1"
+                    ? selectedOptionClassName
+                    : "hover:bg-muted",
+                )}
+              >
+                <TeamLogo
+                  teamName={game.homeTeam}
+                  logoUrl={game.homeTeamLogo}
+                  className="h-7 w-7"
                 />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">{game.homeTeam}</SelectItem>
-                {!isKnockoutGame ? (
-                  <SelectItem value="X">Empate</SelectItem>
-                ) : null}
-                <SelectItem value="2">{game.awayTeam}</SelectItem>
-              </SelectContent>
-            </Select>
+                <span className="truncate">{game.homeTeam}</span>
+              </Button>
+
+              {!isKnockoutGame ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedOption("X")}
+                  className={cn(
+                    "h-auto justify-start gap-2 px-3 py-3 sm:order-3 sm:col-span-2",
+                    selectedOption === "X"
+                      ? selectedOptionClassName
+                      : "hover:bg-muted",
+                  )}
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center text-lg font-bold">
+                    X
+                  </span>
+                  <span className="truncate text-left">Empate</span>
+                </Button>
+              ) : null}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSelectedOption("2")}
+                className={cn(
+                  "h-auto justify-start gap-2 px-3 py-3",
+                  selectedOption === "2"
+                    ? selectedOptionClassName
+                    : "hover:bg-muted",
+                )}
+              >
+                <TeamLogo
+                  teamName={game.awayTeam}
+                  logoUrl={game.awayTeamLogo}
+                  className="h-7 w-7"
+                />
+                <span className="truncate">{game.awayTeam}</span>
+              </Button>
+            </div>
           </div>
 
           <Button

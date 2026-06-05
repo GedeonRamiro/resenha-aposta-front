@@ -1,43 +1,93 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import PaginationShadcn from "@/components/PaginationShadcn";
 import TiTleSeparator from "@/components/TiTleSeparator";
 import { TeamLogo } from "@/components/TeamLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getTeams } from "@/lib/teams";
+import { getTeams, Team } from "@/lib/teams";
+import { useBackendUser } from "@/lib/useBackendUser";
 import { TeamAdminActions } from "./components/TeamAdminActions";
 import { TeamFormDialog } from "./components/TeamFormDialog";
 
-export default async function TeamsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-  }>;
-}) {
-  const params = await searchParams;
-  const currentPage = Number.parseInt(params.page ?? "1");
+export default function TeamsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAdmin, isLoading: isAuthLoading } = useBackendUser();
 
-  let teams = null;
-  let teamsError = "";
+  const currentPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
+  const safeCurrentPage =
+    Number.isNaN(currentPage) || currentPage < 1 ? 1 : currentPage;
 
-  try {
-    teams = await getTeams(currentPage);
-  } catch (error: unknown) {
-    teamsError =
-      error instanceof Error
-        ? error.message
-        : "Não foi possível carregar a lista de times.";
+  const [teamData, setTeamData] = useState<Team[]>([]);
+  const [teamsError, setTeamsError] = useState("");
+  const [pagination, setPagination] = useState<{
+    count: number;
+    nextPage: number | null;
+    lastPage: number | null;
+    prevPage: number | null;
+  } | null>(null);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!isAdmin) {
+      router.replace("/");
+    }
+  }, [isAdmin, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthLoading || !isAdmin) return;
+
+    let mounted = true;
+
+    async function fetchTeams() {
+      try {
+        setIsFetching(true);
+        setTeamsError("");
+
+        const response = await getTeams(safeCurrentPage);
+        if (!mounted) return;
+
+        setTeamData(response.data ?? []);
+        setPagination({
+          count: response.count,
+          nextPage: response.nextPage,
+          lastPage: response.lastPage,
+          prevPage: response.prevPage,
+        });
+      } catch (error: unknown) {
+        if (!mounted) return;
+
+        setTeamData([]);
+        setPagination(null);
+        setTeamsError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar a lista de times.",
+        );
+      } finally {
+        if (mounted) {
+          setIsFetching(false);
+        }
+      }
+    }
+
+    fetchTeams();
+
+    return () => {
+      mounted = false;
+    };
+  }, [safeCurrentPage, isAdmin, isAuthLoading]);
+
+  if (isAuthLoading || !isAdmin) {
+    return null;
   }
 
-  const hasTeamList = Boolean(teams && Array.isArray(teams.data));
-  const teamData = teams?.data ?? [];
+  const hasTeamList = !isFetching;
 
   return (
     <>
@@ -63,33 +113,28 @@ export default async function TeamsPage({
               Nenhum time cadastrado.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Logo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teamData.map((team) => (
-                  <TableRow key={team.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <TeamLogo teamName={team.name} logoUrl={team.logoUrl} />
-                        <span className="font-medium">{team.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">
-                      {team.logoUrl ? "Disponível" : "Não informado"}
-                    </TableCell>
-                    <TableCell>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {teamData.map((team) => (
+                <Card key={team.id} className="transition-all hover:shadow-md ">
+                  <CardContent className="flex flex-col items-center">
+                    <h3 className="line-clamp-2 text-center text-sm font-medium">
+                      {team.name}
+                    </h3>
+                    <div className="flex min-h-24 items-center justify-center">
+                      <TeamLogo
+                        teamName={team.name}
+                        logoUrl={team.logoUrl}
+                        className="h-20 w-20"
+                      />
+                    </div>
+
+                    <div className="mt-auto">
                       <TeamAdminActions team={team} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -97,11 +142,11 @@ export default async function TeamsPage({
       {hasTeamList && teamData.length !== 0 ? (
         <div className="py-4">
           <PaginationShadcn
-            count={teams?.count}
-            currentPage={currentPage}
-            nextPage={teams?.nextPage}
-            lastPage={teams?.lastPage}
-            prevPage={teams?.prevPage}
+            count={pagination?.count}
+            currentPage={safeCurrentPage}
+            nextPage={pagination?.nextPage}
+            lastPage={pagination?.lastPage}
+            prevPage={pagination?.prevPage}
           />
         </div>
       ) : null}

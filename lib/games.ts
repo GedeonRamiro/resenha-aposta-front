@@ -21,6 +21,13 @@ export type GamePayload = {
   penaltyAwayScore?: number;
 };
 
+type NullableScoreUpdateFields = {
+  secondLegHomeScore?: number | null;
+  secondLegAwayScore?: number | null;
+  penaltyHomeScore?: number | null;
+  penaltyAwayScore?: number | null;
+};
+
 type CreateGamePayload = Pick<
   GamePayload,
   | "homeTeamId"
@@ -39,7 +46,8 @@ type CreateGamePayload = Pick<
   competitionId: string;
 };
 
-export type GameUpdatePayload = Partial<GamePayload>;
+export type GameUpdatePayload = Partial<GamePayload> &
+  NullableScoreUpdateFields;
 
 function toApiIsoDateTime(value: string, fieldName: string): string {
   const parsed = new Date(value);
@@ -125,15 +133,17 @@ function sanitizeUpdateGamePayload(
   }
 
   if (gameType && gameType !== "KNOCKOUT") {
-    sanitizedPayload.penaltyHomeScore = undefined;
-    sanitizedPayload.penaltyAwayScore = undefined;
-    sanitizedPayload.secondLegHomeScore = undefined;
-    sanitizedPayload.secondLegAwayScore = undefined;
+    sanitizedPayload.penaltyHomeScore = null;
+    sanitizedPayload.penaltyAwayScore = null;
+    sanitizedPayload.secondLegHomeScore = null;
+    sanitizedPayload.secondLegAwayScore = null;
   }
 
   if (gameType === "KNOCKOUT") {
-    sanitizedPayload.secondLegHomeScore = payload.secondLegHomeScore;
-    sanitizedPayload.secondLegAwayScore = payload.secondLegAwayScore;
+    sanitizedPayload.secondLegHomeScore = payload.secondLegHomeScore ?? null;
+    sanitizedPayload.secondLegAwayScore = payload.secondLegAwayScore ?? null;
+    sanitizedPayload.penaltyHomeScore = payload.penaltyHomeScore ?? null;
+    sanitizedPayload.penaltyAwayScore = payload.penaltyAwayScore ?? null;
   }
 
   return sanitizedPayload;
@@ -155,6 +165,13 @@ export function parseOptionalScoreInput(value?: string): number | undefined {
   }
 
   return score;
+}
+
+export function parseOptionalScoreInputToNullable(
+  value?: string,
+): number | null {
+  const score = parseOptionalScoreInput(value);
+  return score ?? null;
 }
 
 export function formatOptionalScoreInput(score?: number | null): string {

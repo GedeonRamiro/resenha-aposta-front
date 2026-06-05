@@ -1,23 +1,28 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const extraAllowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
+const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-const nextConfig: NextConfig = {
-  allowedDevOrigins: extraAllowedDevOrigins,
-  async rewrites() {
-    if (process.env.NODE_ENV !== "development") {
-      return [];
-    }
+const isDevelopment = process.env.NODE_ENV === "development";
 
-    return [
-      {
-        source: "/backend/:path*",
-        destination: "http://localhost:8000/:path*",
-      },
-    ];
+const nextConfig: NextConfig = {
+  outputFileTracingRoot: projectRoot,
+  allowedDevOrigins,
+  async rewrites() {
+    return isDevelopment
+      ? [
+          {
+            source: "/backend/:path*",
+            destination: "http://localhost:8000/:path*",
+          },
+        ]
+      : [];
   },
 };
 

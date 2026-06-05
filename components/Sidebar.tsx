@@ -36,6 +36,22 @@ type RankingSubItem = {
   href: string;
 };
 
+type GameQuickFilterKey = "all" | "today" | "tomorrow" | "next3" | "next7";
+
+type GamesSubItem = {
+  label: string;
+  key: GameQuickFilterKey;
+  href: string;
+};
+
+type BetQuickFilterKey = "all" | "today" | "tomorrow" | "next3" | "last3";
+
+type BetsSubItem = {
+  label: string;
+  key: BetQuickFilterKey;
+  href: string;
+};
+
 const emptySubscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -46,6 +62,86 @@ function seasonToHref(season: RankingSeason) {
   params.set("startDate", season.startDate);
   params.set("endDate", season.endDate);
   return `/user-scores?${params.toString()}`;
+}
+
+function getLocalStartOfDay(value: Date): Date {
+  const localDate = new Date(value);
+  localDate.setHours(0, 0, 0, 0);
+  return localDate;
+}
+
+function toLocalStartOfDayIso(value: Date): string {
+  return getLocalStartOfDay(value).toISOString();
+}
+
+function toLocalEndExclusiveIso(value: Date): string {
+  const localEndExclusive = getLocalStartOfDay(value);
+  localEndExclusive.setDate(localEndExclusive.getDate() + 1);
+  return localEndExclusive.toISOString();
+}
+
+function gameQuickFilterToHref(filter: GameQuickFilterKey): string {
+  const params = new URLSearchParams();
+  params.set("page", "1");
+  params.set("quickFilter", filter);
+
+  if (filter === "all") {
+    return `/games?${params.toString()}`;
+  }
+
+  const today = getLocalStartOfDay(new Date());
+  const from = new Date(today);
+  let to = new Date(today);
+
+  if (filter === "tomorrow") {
+    from.setDate(from.getDate() + 1);
+    to = new Date(from);
+  }
+
+  if (filter === "next3") {
+    to.setDate(to.getDate() + 3);
+  }
+
+  if (filter === "next7") {
+    to.setDate(to.getDate() + 7);
+  }
+
+  params.set("startDate", toLocalStartOfDayIso(from));
+  params.set("endDate", toLocalEndExclusiveIso(to));
+
+  return `/games?${params.toString()}`;
+}
+
+function betQuickFilterToHref(filter: BetQuickFilterKey): string {
+  const params = new URLSearchParams();
+  params.set("page", "1");
+  params.set("quickFilter", filter);
+
+  if (filter === "all") {
+    return `/bets?${params.toString()}`;
+  }
+
+  const today = getLocalStartOfDay(new Date());
+  const from = new Date(today);
+  let to = new Date(today);
+
+  if (filter === "tomorrow") {
+    from.setDate(from.getDate() + 1);
+    to = new Date(from);
+  }
+
+  if (filter === "next3") {
+    to.setDate(to.getDate() + 3);
+  }
+
+  if (filter === "last3") {
+    from.setDate(from.getDate() - 3);
+  }
+
+  params.set("startDate", toLocalStartOfDayIso(from));
+  params.set("endDate", toLocalEndExclusiveIso(to));
+
+  return `/bets?${params.toString()}`;
 }
 
 const menuItems = [
@@ -70,7 +166,7 @@ const menuItems = [
 
 export function Sidebar() {
   const { open, closeSidebar } = useSidebarStore();
-  const { isAuthenticated, isAdmin, isModerator } = useBackendUser();
+  const { isAuthenticated, isAdmin } = useBackendUser();
   const isClient = useSyncExternalStore(
     emptySubscribe,
     getClientSnapshot,
@@ -79,12 +175,58 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentPeriod = searchParams.get("period") || "geral";
+  const currentGameQuickFilter = searchParams.get("quickFilter") || "all";
+  const currentBetQuickFilter = searchParams.get("quickFilter") || "all";
+  const isGamesRoute = pathname.startsWith("/games");
+  const isBetsRoute = pathname.startsWith("/bets");
   const isRankingRoute = pathname.startsWith("/user-scores");
+  const [isGamesOpen, setIsGamesOpen] = useState(isGamesRoute);
+  const [isBetsOpen, setIsBetsOpen] = useState(isBetsRoute);
   const [isRankingOpen, setIsRankingOpen] = useState(isRankingRoute);
+  const gamesOpen = isGamesOpen || isGamesRoute;
+  const betsOpen = isBetsOpen || isBetsRoute;
   const rankingOpen = isRankingOpen || isRankingRoute;
   const [rankingSubItems, setRankingSubItems] = useState<RankingSubItem[]>([
     { label: "Geral", href: "/user-scores?period=geral" },
   ]);
+  const gameSubItems: GamesSubItem[] = [
+    { label: "Todos", key: "all", href: gameQuickFilterToHref("all") },
+    { label: "Hoje", key: "today", href: gameQuickFilterToHref("today") },
+    {
+      label: "Amanhã",
+      key: "tomorrow",
+      href: gameQuickFilterToHref("tomorrow"),
+    },
+    {
+      label: "Próximos 3 dias",
+      key: "next3",
+      href: gameQuickFilterToHref("next3"),
+    },
+    {
+      label: "Próximos 7 dias",
+      key: "next7",
+      href: gameQuickFilterToHref("next7"),
+    },
+  ];
+  const betSubItems: BetsSubItem[] = [
+    { label: "Toda", key: "all", href: betQuickFilterToHref("all") },
+    { label: "Hoje", key: "today", href: betQuickFilterToHref("today") },
+    {
+      label: "Amanhã",
+      key: "tomorrow",
+      href: betQuickFilterToHref("tomorrow"),
+    },
+    {
+      label: "Próximos 3 dias",
+      key: "next3",
+      href: betQuickFilterToHref("next3"),
+    },
+    {
+      label: "Ultimos 3 dias",
+      key: "last3",
+      href: betQuickFilterToHref("last3"),
+    },
+  ];
 
   const loadRankingSubItems = useCallback(() => {
     getConfig()
@@ -142,7 +284,76 @@ export function Sidebar() {
               const isParentActive =
                 item.href === "/user-scores"
                   ? pathname.startsWith("/user-scores")
-                  : pathname === item.href;
+                  : item.href === "/games"
+                    ? pathname.startsWith("/games")
+                    : item.href === "/bets"
+                      ? pathname.startsWith("/bets")
+                      : pathname === item.href;
+
+              if (item.href === "/games") {
+                return (
+                  <div key={item.href}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-between rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                        isParentActive
+                          ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                          : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                      )}
+                      onClick={() => setIsGamesOpen((current) => !current)}
+                    >
+                      <span className="flex items-center gap-3">
+                        {item.icon}
+                        {item.label}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 transition-transform duration-200",
+                          gamesOpen ? "rotate-180" : "rotate-0",
+                        )}
+                      />
+                    </Button>
+
+                    <div
+                      className={cn(
+                        "ml-6 mt-2 overflow-hidden border-l border-primary/20 pl-3 transition-all duration-200",
+                        gamesOpen
+                          ? "max-h-48 opacity-100"
+                          : "max-h-0 opacity-0",
+                      )}
+                    >
+                      <div className="flex flex-col gap-1 py-1">
+                        {gameSubItems.map((subItem) => {
+                          const isCurrentSubItem =
+                            pathname.startsWith("/games") &&
+                            currentGameQuickFilter === subItem.key;
+
+                          return (
+                            <Link
+                              key={subItem.key}
+                              href={subItem.href}
+                              onClick={closeSidebar}
+                              aria-current={
+                                isCurrentSubItem ? "page" : undefined
+                              }
+                              className={cn(
+                                "rounded-md px-2 py-1.5 text-xs transition-colors",
+                                isCurrentSubItem
+                                  ? "bg-primary/15 text-primary"
+                                  : "text-muted-foreground hover:bg-primary/8 hover:text-foreground",
+                              )}
+                            >
+                              {subItem.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
 
               if (item.href === "/user-scores") {
                 return (
@@ -209,6 +420,69 @@ export function Sidebar() {
                 );
               }
 
+              if (item.href === "/bets") {
+                return (
+                  <div key={item.href}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-between rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                        isParentActive
+                          ? "border-primary/35 bg-primary/18 text-primary hover:bg-primary/20"
+                          : "border-transparent hover:border-primary/20 hover:bg-primary/10",
+                      )}
+                      onClick={() => setIsBetsOpen((current) => !current)}
+                    >
+                      <span className="flex items-center gap-3">
+                        {item.icon}
+                        {item.label}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 transition-transform duration-200",
+                          betsOpen ? "rotate-180" : "rotate-0",
+                        )}
+                      />
+                    </Button>
+
+                    <div
+                      className={cn(
+                        "ml-6 mt-2 overflow-hidden border-l border-primary/20 pl-3 transition-all duration-200",
+                        betsOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0",
+                      )}
+                    >
+                      <div className="flex flex-col gap-1 py-1">
+                        {betSubItems.map((subItem) => {
+                          const isCurrentSubItem =
+                            pathname.startsWith("/bets") &&
+                            currentBetQuickFilter === subItem.key;
+
+                          return (
+                            <Link
+                              key={subItem.key}
+                              href={subItem.href}
+                              onClick={closeSidebar}
+                              aria-current={
+                                isCurrentSubItem ? "page" : undefined
+                              }
+                              className={cn(
+                                "rounded-md px-2 py-1.5 text-xs transition-colors",
+                                isCurrentSubItem
+                                  ? "bg-primary/15 text-primary"
+                                  : "text-muted-foreground hover:bg-primary/8 hover:text-foreground",
+                              )}
+                            >
+                              {subItem.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div key={item.href}>
                   <Button
@@ -236,7 +510,7 @@ export function Sidebar() {
             })}
           </SidebarGroup>
 
-          {(isAdmin || isModerator) && (
+          {isAdmin && (
             <SidebarGroup className="border-t border-primary/20 pt-2">
               <Button
                 asChild

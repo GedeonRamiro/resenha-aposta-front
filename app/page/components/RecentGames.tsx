@@ -74,6 +74,8 @@ export default function RecentGames({ games }: RecentGamesProps) {
     };
   }, [carouselApi, games.length]);
 
+  console.log("RecentGames render", { games });
+
   return (
     <Card className={surfaceCardClassName}>
       <CardHeader className="space-y-3">
