@@ -46,7 +46,10 @@ type CreateGamePayload = Pick<
   competitionId: string;
 };
 
-export type GameUpdatePayload = Partial<GamePayload> &
+export type GameUpdatePayload = Omit<
+  Partial<GamePayload>,
+  keyof NullableScoreUpdateFields
+> &
   NullableScoreUpdateFields;
 
 function toApiIsoDateTime(value: string, fieldName: string): string {
