@@ -553,12 +553,12 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     size="sm"
                     disabled={isBusy}
                     onClick={() => {
-                      form.setValue("penaltyHomeScore", "", {
+                      form.setValue("penaltyHomeScore", undefined, {
                         shouldDirty: true,
                         shouldTouch: true,
                         shouldValidate: true,
                       });
-                      form.setValue("penaltyAwayScore", "", {
+                      form.setValue("penaltyAwayScore", undefined, {
                         shouldDirty: true,
                         shouldTouch: true,
                         shouldValidate: true,
