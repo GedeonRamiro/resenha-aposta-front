@@ -114,8 +114,8 @@ export default function EditGame() {
         status: nextStatus,
         homeScore: data.homeScore,
         awayScore: data.awayScore,
-        penaltyHomeScore: data.penaltyHomeScore ?? null,
-        penaltyAwayScore: data.penaltyAwayScore ?? null,
+        penaltyHomeScore: data.penaltyHomeScore,
+        penaltyAwayScore: data.penaltyAwayScore,
         secondLegHomeScore,
         secondLegAwayScore,
       });
