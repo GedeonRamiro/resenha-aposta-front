@@ -62,6 +62,20 @@ export default async function Games({
 
   if (!Array.isArray(games?.data)) return null;
 
+  const orderedGames = [...games.data].sort((firstGame, secondGame) => {
+    const firstGameDate = new Date(firstGame.gameDate).getTime();
+    const secondGameDate = new Date(secondGame.gameDate).getTime();
+
+    if (firstGameDate !== secondGameDate) {
+      return secondGameDate - firstGameDate;
+    }
+
+    const firstCreatedAt = new Date(firstGame.createdAt).getTime();
+    const secondCreatedAt = new Date(secondGame.createdAt).getTime();
+
+    return secondCreatedAt - firstCreatedAt;
+  });
+
   return (
     <>
       <TiTleSeparator title="Todos os Jogos" />
@@ -70,13 +84,13 @@ export default async function Games({
         <DateRangeFilter />
         <CreateGameAdminButton />
       </div>
-      {games.data.length === 0 ? (
+      {orderedGames.length === 0 ? (
         <div className="text-center text-muted-foreground">
           Nenhum jogo encontrado para os filtros aplicados.
         </div>
       ) : null}
       <div className="grid auto-rows-fr grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {games.data.map((game) => {
+        {orderedGames.map((game) => {
           const hasSecondLegResult =
             game.gameType === "KNOCKOUT" &&
             typeof game.homeScore === "number" &&
@@ -231,7 +245,7 @@ export default async function Games({
           );
         })}
       </div>
-      {games.data.length !== 0 && (
+      {orderedGames.length !== 0 && (
         <div className="py-4">
           <PaginationShadcn
             count={games.count}
