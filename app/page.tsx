@@ -62,8 +62,6 @@ export default async function Home() {
   const topRanking = ranking?.slice(0, 5) ?? [];
   const latestPosts = posts?.data?.slice(0, 5) ?? [];
 
-  console.log(topBets);
-
   return (
     <div className="space-y-8 pb-6">
       <HeroSection
