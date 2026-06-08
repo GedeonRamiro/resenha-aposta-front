@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { APP_CONFIG_UPDATED_EVENT, getConfig } from "@/lib/config";
+import { cn } from "@/lib/utils";
 
 interface PeriodFilter {
   key: string;
@@ -22,12 +23,15 @@ export function PeriodFilters() {
   const loadPeriodFilters = useCallback(() => {
     getConfig()
       .then((config) => {
-        const seasons = (config.rankingSeasons ?? []).map((season) => ({
-          key: season.slug,
-          label: season.label,
-          startDate: season.startDate,
-          endDate: season.endDate,
-        }));
+        const seasons = (config.rankingSeasons ?? [])
+          .slice()
+          .sort((a, b) => b.startDate.localeCompare(a.startDate))
+          .map((season) => ({
+            key: season.slug,
+            label: season.label,
+            startDate: season.startDate,
+            endDate: season.endDate,
+          }));
 
         setPeriodFilters([{ key: "geral", label: "Geral" }, ...seasons]);
       })
@@ -87,20 +91,41 @@ export function PeriodFilters() {
   };
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      {periodFilters.map((period) => {
-        const filter = period;
+    <div className="space-y-2">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">Temporadas</p>
+          <p className="text-xs text-muted-foreground">
+            Troque o recorte do ranking sem perder a leitura da tela.
+          </p>
+        </div>
+      </div>
 
-        return (
-          <Button
-            key={period.key}
-            variant={selectedPeriod === period.key ? "default" : "outline"}
-            onClick={() => handleFilterChange(period.key)}
-          >
-            {filter.label}
-          </Button>
-        );
-      })}
+      <div className="overflow-x-auto pb-1">
+        <div className="inline-flex min-w-full items-center gap-2 rounded-2xl border border-border/70 bg-muted/30 p-2 shadow-sm">
+          {periodFilters.map((period) => {
+            const isActive = selectedPeriod === period.key;
+
+            return (
+              <Button
+                key={period.key}
+                type="button"
+                variant="ghost"
+                aria-pressed={isActive}
+                onClick={() => handleFilterChange(period.key)}
+                className={cn(
+                  "shrink-0 h-7 rounded-full px-4 text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+                    : "text-muted-foreground hover:bg-background hover:text-foreground",
+                )}
+              >
+                {period.label}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

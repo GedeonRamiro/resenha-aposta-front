@@ -209,7 +209,7 @@ export function Sidebar() {
     },
   ];
   const betSubItems: BetsSubItem[] = [
-    { label: "Toda", key: "all", href: betQuickFilterToHref("all") },
+    { label: "Todas", key: "all", href: betQuickFilterToHref("all") },
     { label: "Hoje", key: "today", href: betQuickFilterToHref("today") },
     {
       label: "Amanhã",
