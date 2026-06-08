@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Lock, Trophy } from "lucide-react";
+import { CalendarDays, Lock } from "lucide-react";
 
 import {
   CarouselApi,
@@ -27,12 +27,13 @@ import { cn } from "@/lib/utils";
 import { IDataGame } from "@/types/types";
 import { formatDate } from "./utils";
 import { TeamLogo } from "@/components/TeamLogo";
+import { CompetitionLogo } from "@/components/CompetitionLogo";
 
 const surfaceCardClassName =
   "border border-primary/25 bg-linear-to-b from-primary/8 via-card to-primary/4 shadow-[0_20px_55px_-44px_rgba(234,88,12,0.55)] ring-primary/20";
 
 interface RecentGamesProps {
-  games: IDataGame[];
+  games: Array<IDataGame & { competitionLogoUrl?: string | null }>;
 }
 
 export default function RecentGames({ games }: RecentGamesProps) {
@@ -116,7 +117,13 @@ export default function RecentGames({ games }: RecentGamesProps) {
                   >
                     <div className="flex h-full flex-col rounded-[1.4rem] border border-primary/15 bg-background/90 p-4">
                       <p className="flex items-start gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
-                        <Trophy className="mt-0.5 size-3.5 shrink-0" />
+                        <CompetitionLogo
+                          competitionName={
+                            game.competition ?? "Partida cadastrada"
+                          }
+                          logoUrl={game.competitionLogoUrl}
+                          className="mt-0.5 h-5 w-5"
+                        />
                         <span className="whitespace-normal wrap-break-word leading-relaxed">
                           {game.competition ?? "Partida cadastrada"}
                         </span>
