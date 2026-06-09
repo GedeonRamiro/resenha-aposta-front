@@ -114,7 +114,6 @@ export function CompetitionFormDialog(props: CompetitionFormDialogProps) {
           </Button>
         ) : (
           <Button type="button" variant="link" className="px-0">
-            <Pencil className="size-4" />
             Editar
           </Button>
         )}
