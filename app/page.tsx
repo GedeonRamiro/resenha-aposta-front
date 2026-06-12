@@ -19,8 +19,8 @@ export default async function Home() {
     postsResult,
     competitionsResult,
   ] = await Promise.allSettled([
-    getGames(1, undefined, undefined, 10),
-    getBets(1, undefined, undefined, 20),
+    getGames(1, undefined, undefined, 200),
+    getBets(1, undefined, undefined, 2000),
     getUserScores(),
     getBlogPosts(1, undefined, 5),
     getAllCompetitions(),
