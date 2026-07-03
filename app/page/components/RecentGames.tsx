@@ -75,6 +75,32 @@ export default function RecentGames({ games }: RecentGamesProps) {
     };
   }, [carouselApi, games.length]);
 
+  const renderScore = (
+    score: number | null,
+    secondLegScore: number | null,
+    penaltyScore: number | null,
+    hasSecondLegResult: boolean,
+    hasPenaltyResult: boolean,
+  ) => (
+    <span className="inline-flex items-center gap-1 text-sm">
+      <span className="inline-flex w-5 justify-center">
+        {typeof score === "number" ? score : "-"}
+      </span>
+
+      {hasSecondLegResult ? (
+        <span className="inline-flex w-5 justify-center">
+          {secondLegScore}
+        </span>
+      ) : null}
+
+      {hasPenaltyResult ? (
+        <span className="inline-flex min-w-8 justify-center">
+          ({penaltyScore})
+        </span>
+      ) : null}
+    </span>
+  );
+
   return (
     <Card className={surfaceCardClassName}>
       <CardHeader className="space-y-3">
@@ -110,81 +136,106 @@ export default function RecentGames({ games }: RecentGamesProps) {
               opts={{ loop: true }}
             >
               <CarouselContent>
-                {games.map((game) => (
-                  <CarouselItem
-                    key={game.id}
-                    className="md:basis-1/2 xl:basis-full 2xl:basis-1/2"
-                  >
-                    <div className="flex h-full flex-col rounded-[1.4rem] border border-primary/15 bg-background/90 p-4">
-                      <p className="flex items-start gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
-                        <CompetitionLogo
-                          competitionName={
-                            game.competition ?? "Partida cadastrada"
-                          }
-                          logoUrl={game.competitionLogoUrl}
-                          className="mt-0.5 h-5 w-5"
-                        />
-                        <span className="whitespace-normal wrap-break-word leading-relaxed">
-                          {game.competition ?? "Partida cadastrada"}
-                        </span>
-                      </p>
+                {games.map((game) => {
+                  const hasSecondLegResult =
+                    game.gameType === "KNOCKOUT" &&
+                    typeof game.homeScore === "number" &&
+                    typeof game.awayScore === "number" &&
+                    typeof game.secondLegHomeScore === "number" &&
+                    typeof game.secondLegAwayScore === "number";
 
-                      <div className="mt-2 space-y-2 text-sm font-semibold leading-snug">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <TeamLogo
-                              teamName={game.homeTeam}
-                              logoUrl={game.homeTeamLogo}
-                            />
-                            <span className="truncate">{game.homeTeam}</span>
-                          </div>
+                  const hasPenaltyResult =
+                    typeof game.penaltyHomeScore === "number" &&
+                    typeof game.penaltyAwayScore === "number";
 
-                          {typeof game.homeScore === "number" ? (
-                            <span className="shrink-0">{game.homeScore}</span>
-                          ) : null}
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <TeamLogo
-                              teamName={game.awayTeam}
-                              logoUrl={game.awayTeamLogo}
-                            />
-                            <span className="truncate">{game.awayTeam}</span>
-                          </div>
-
-                          {typeof game.awayScore === "number" ? (
-                            <span className="shrink-0">{game.awayScore}</span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="mt-6 space-y-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="size-4 text-primary" />
-                          <span>{formatDate(game.gameDate)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Lock className="size-4 text-primary" />
-                          <span>
-                            Mercado fecha em {formatDate(game.betCloseAt)}
+                  return (
+                    <CarouselItem
+                      key={game.id}
+                      className="md:basis-1/2 xl:basis-full 2xl:basis-1/2"
+                    >
+                      <div className="flex h-full flex-col rounded-[1.4rem] border border-primary/15 bg-background/90 p-4">
+                        <p className="flex items-start gap-2 text-xs font-medium uppercase tracking-[0.22em] text-primary/70">
+                          <CompetitionLogo
+                            competitionName={
+                              game.competition ?? "Partida cadastrada"
+                            }
+                            logoUrl={game.competitionLogoUrl}
+                            className="mt-0.5 h-5 w-5"
+                          />
+                          <span className="whitespace-normal wrap-break-word leading-relaxed">
+                            {game.competition ?? "Partida cadastrada"}
                           </span>
+                        </p>
+
+                        <div className="mt-2 space-y-2 text-sm font-semibold leading-snug">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <TeamLogo
+                                teamName={game.homeTeam}
+                                logoUrl={game.homeTeamLogo}
+                              />
+                              <span className="truncate">{game.homeTeam}</span>
+                            </div>
+
+                            <span className="shrink-0 text-right tabular-nums">
+                              {renderScore(
+                                game.homeScore,
+                                game.secondLegHomeScore,
+                                game.penaltyHomeScore,
+                                hasSecondLegResult,
+                                hasPenaltyResult,
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <TeamLogo
+                                teamName={game.awayTeam}
+                                logoUrl={game.awayTeamLogo}
+                              />
+                              <span className="truncate">{game.awayTeam}</span>
+                            </div>
+
+                            <span className="shrink-0 text-right tabular-nums">
+                              {renderScore(
+                                game.awayScore,
+                                game.secondLegAwayScore,
+                                game.penaltyAwayScore,
+                                hasSecondLegResult,
+                                hasPenaltyResult,
+                              )}
+                            </span>
+                          </div>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "w-fit rounded-full border px-3 py-1 text-[11px] font-semibold",
-                            GAME_STATUS_COLORS[game.status] ?? "",
-                          )}
-                        >
-                          {GAME_STATUS_LABEL[
-                            game.status as keyof typeof GAME_STATUS_LABEL
-                          ] ?? game.status}
-                        </Badge>
+
+                        <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="size-4 text-primary" />
+                            <span>{formatDate(game.gameDate)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Lock className="size-4 text-primary" />
+                            <span>
+                              Mercado fecha em {formatDate(game.betCloseAt)}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "w-fit rounded-full border px-3 py-1 text-[11px] font-semibold",
+                              GAME_STATUS_COLORS[game.status] ?? "",
+                            )}
+                          >
+                            {GAME_STATUS_LABEL[
+                              game.status as keyof typeof GAME_STATUS_LABEL
+                            ] ?? game.status}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </CarouselItem>
-                ))}
+                    </CarouselItem>
+                  );
+                })}
               </CarouselContent>
             </Carousel>
 

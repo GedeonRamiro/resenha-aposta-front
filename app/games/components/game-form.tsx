@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Check, Eraser, Loader2, Lock, LockOpen } from "lucide-react";
+import {
+  Check,
+  Eraser,
+  Loader2,
+  Lock,
+  LockOpen,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -102,21 +110,140 @@ function TeamSuggestionAvatar({ team }: { team: Team }) {
   );
 }
 
-function parseNonNegativeIntegerFromInput(value: string): number | undefined {
-  if (value === "") {
-    return undefined;
-  }
-
-  const score = Number(value);
-  if (!Number.isInteger(score) || score < 0) {
-    return undefined;
-  }
-
-  return score;
-}
-
 function sanitizeOptionalScoreText(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+type ScoreStepperInputProps = {
+  value: number | string | undefined;
+  disabled?: boolean;
+  name: string;
+  onBlur: () => void;
+  onChange: (value: number | string | undefined) => void;
+  inputRef: React.Ref<HTMLInputElement>;
+  variant: "number" | "text";
+};
+
+function ScoreStepperInput({
+  value,
+  disabled,
+  name,
+  onBlur,
+  onChange,
+  inputRef,
+  variant,
+}: ScoreStepperInputProps) {
+  const currentValue =
+    typeof value === "number"
+      ? String(value)
+      : typeof value === "string"
+        ? value
+        : "";
+
+  const updateValue = (nextValue: number) => {
+    if (variant === "text") {
+      onChange(String(Math.max(nextValue, 0)));
+      return;
+    }
+
+    onChange(Math.max(nextValue, 0));
+  };
+
+  const handleStep = (delta: number) => {
+    const parsedValue = Number.parseInt(currentValue, 10);
+    const safeValue =
+      Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+    updateValue(safeValue + delta);
+  };
+
+  return (
+    <div className="inline-flex items-stretch gap-1.5">
+      <Input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        disabled={disabled}
+        value={currentValue}
+        onChange={(event) => {
+          const nextValue = sanitizeOptionalScoreText(event.target.value);
+
+          if (variant === "text") {
+            onChange(nextValue);
+            return;
+          }
+
+          onChange(nextValue === "" ? undefined : Number(nextValue));
+        }}
+        onBlur={onBlur}
+        name={name}
+        ref={inputRef}
+        className="h-11 w-12 rounded-lg px-1 text-center text-sm font-semibold tabular-nums"
+      />
+
+      <div className="flex flex-col overflow-hidden rounded-lg border border-input bg-background">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          className="h-5 w-5 rounded-none border-b border-input"
+          aria-label="Aumentar placar"
+          onClick={() => handleStep(1)}
+        >
+          <Plus className="size-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          className="h-5 w-5 rounded-none"
+          aria-label="Diminuir placar"
+          onClick={() => handleStep(-1)}
+        >
+          <Minus className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ScorePhaseCard({
+  title,
+  homeLabel,
+  awayLabel,
+  homeField,
+  awayField,
+}: {
+  title: string;
+  homeLabel: string;
+  awayLabel: string;
+  homeField: React.ReactNode;
+  awayField: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {title}
+      </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="space-y-1.5 text-center">
+          <span className="text-xs font-medium text-muted-foreground">
+            {homeLabel}
+          </span>
+          <div className="flex justify-center">{homeField}</div>
+        </div>
+
+        <div className="space-y-1.5 text-center">
+          <span className="text-xs font-medium text-muted-foreground">
+            {awayLabel}
+          </span>
+          <div className="flex justify-center">{awayField}</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function getStatusIcon(status: GameStatus) {
@@ -447,76 +574,6 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="homeScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {gameType === "KNOCKOUT"
-                        ? "Placar ida da casa"
-                        : "Placar Casa"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={1}
-                        disabled={isBusy}
-                        value={field.value ?? ""}
-                        onChange={(event) =>
-                          field.onChange(
-                            parseNonNegativeIntegerFromInput(
-                              event.target.value,
-                            ),
-                          )
-                        }
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="awayScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {gameType === "KNOCKOUT"
-                        ? "Placar ida do visitante"
-                        : "Placar Visitante"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={1}
-                        disabled={isBusy}
-                        value={field.value ?? ""}
-                        onChange={(event) =>
-                          field.onChange(
-                            parseNonNegativeIntegerFromInput(
-                              event.target.value,
-                            ),
-                          )
-                        }
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             {gameType === "KNOCKOUT" && (
               <>
                 <div className="flex justify-end gap-2">
@@ -575,123 +632,203 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="secondLegHomeScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Placar volta da casa</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            disabled={isBusy}
-                            value={field.value ?? ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                sanitizeOptionalScoreText(event.target.value),
-                              )
-                            }
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="space-y-4">
+                  <ScorePhaseCard
+                    title="Placa ida"
+                    homeLabel="Casa"
+                    awayLabel="Visitante"
+                    homeField={
+                      <FormField
+                        control={form.control}
+                        name="homeScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="number"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "number"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? undefined
+                                        : Number(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
+                    awayField={
+                      <FormField
+                        control={form.control}
+                        name="awayScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="number"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "number"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? undefined
+                                        : Number(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="secondLegAwayScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Placar volta do visitante</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            disabled={isBusy}
-                            value={field.value ?? ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                sanitizeOptionalScoreText(event.target.value),
-                              )
-                            }
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <ScorePhaseCard
+                    title="Placa volta"
+                    homeLabel="Casa"
+                    awayLabel="Visitante"
+                    homeField={
+                      <FormField
+                        control={form.control}
+                        name="secondLegHomeScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="text"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "string"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? ""
+                                        : String(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
+                    awayField={
+                      <FormField
+                        control={form.control}
+                        name="secondLegAwayScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="text"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "string"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? ""
+                                        : String(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
                   />
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="penaltyHomeScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Pênaltis Casa</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            disabled={isBusy}
-                            value={field.value ?? ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                parseNonNegativeIntegerFromInput(
-                                  event.target.value,
-                                ),
-                              )
-                            }
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="penaltyAwayScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Pênaltis Visitante</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            disabled={isBusy}
-                            value={field.value ?? ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                parseNonNegativeIntegerFromInput(
-                                  event.target.value,
-                                ),
-                              )
-                            }
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <ScorePhaseCard
+                    title="Pênaltis"
+                    homeLabel="Casa"
+                    awayLabel="Visitante"
+                    homeField={
+                      <FormField
+                        control={form.control}
+                        name="penaltyHomeScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="number"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "number"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? undefined
+                                        : Number(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
+                    awayField={
+                      <FormField
+                        control={form.control}
+                        name="penaltyAwayScore"
+                        render={({ field }) => (
+                          <FormItem className="space-y-0">
+                            <FormControl>
+                              <ScoreStepperInput
+                                value={field.value}
+                                disabled={isBusy}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                inputRef={field.ref}
+                                variant="number"
+                                onChange={(nextValue) =>
+                                  field.onChange(
+                                    typeof nextValue === "number"
+                                      ? nextValue
+                                      : nextValue === undefined
+                                        ? undefined
+                                        : Number(nextValue),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    }
                   />
                 </div>
               </>

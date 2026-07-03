@@ -26,6 +26,32 @@ interface RecentBetsProps {
   bets: IDataBet[];
 }
 
+function renderGameScore(
+  score: number | null,
+  secondLegScore: number | null,
+  penaltyScore: number | null,
+  hasSecondLegResult: boolean,
+  hasPenaltyResult: boolean,
+) {
+  return (
+    <span className="inline-flex items-center gap-1 text-sm tabular-nums">
+      <span className="inline-flex w-5 justify-center">
+        {typeof score === "number" ? score : "-"}
+      </span>
+
+      {hasSecondLegResult ? (
+        <span className="inline-flex w-5 justify-center">{secondLegScore}</span>
+      ) : null}
+
+      {hasPenaltyResult ? (
+        <span className="inline-flex min-w-8 justify-center">
+          ({penaltyScore})
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 function getRandomBets(bets: IDataBet[], count: number): IDataBet[] {
   if (bets.length <= count) return bets;
 
@@ -55,6 +81,16 @@ export default function RecentBets({ bets }: RecentBetsProps) {
         ) : (
           displayBets.map((bet) => {
             const betResult = getBetResultLabel(bet);
+            const hasSecondLegResult =
+              bet.game.gameType === "KNOCKOUT" &&
+              typeof bet.game.homeScore === "number" &&
+              typeof bet.game.awayScore === "number" &&
+              typeof bet.game.secondLegHomeScore === "number" &&
+              typeof bet.game.secondLegAwayScore === "number";
+
+            const hasPenaltyResult =
+              typeof bet.game.penaltyHomeScore === "number" &&
+              typeof bet.game.penaltyAwayScore === "number";
 
             return (
               <div
@@ -70,17 +106,33 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                     />
                     <div>
                       <p className="font-medium">{bet.user.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {bet.game.homeTeam}{" "}
-                        {typeof bet.game.homeScore === "number"
-                          ? bet.game.homeScore
-                          : ""}{" "}
-                        x{" "}
-                        {typeof bet.game.awayScore === "number"
-                          ? bet.game.awayScore
-                          : ""}{" "}
-                        {bet.game.awayTeam}
-                      </p>
+                      <div className="mt-1 space-y-1 text-sm leading-snug text-muted-foreground">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate">
+                            {bet.game.homeTeam}
+                          </span>
+                          {renderGameScore(
+                            bet.game.homeScore,
+                            bet.game.secondLegHomeScore,
+                            bet.game.penaltyHomeScore,
+                            hasSecondLegResult,
+                            hasPenaltyResult,
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate">
+                            {bet.game.awayTeam}
+                          </span>
+                          {renderGameScore(
+                            bet.game.awayScore,
+                            bet.game.secondLegAwayScore,
+                            bet.game.penaltyAwayScore,
+                            hasSecondLegResult,
+                            hasPenaltyResult,
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
