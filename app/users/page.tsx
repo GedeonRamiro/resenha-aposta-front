@@ -67,6 +67,7 @@ export default async function Users({
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead className="text-right">Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
@@ -80,6 +81,9 @@ export default async function Users({
                           {user.name?.trim() || "Usuário sem nome"}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell className="truncate text-sm text-muted-foreground">
+                      {user.email?.trim() || "Email não informado"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
