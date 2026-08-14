@@ -281,6 +281,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
   const isEditing = !!initialData;
   const isBusy = !!loading || form.formState.isSubmitting;
   const gameType = form.watch("gameType");
+  const isKnockout = gameType === "KNOCKOUT";
   const selectedHomeTeamId = form.watch("homeTeamId");
   const selectedAwayTeamId = form.watch("awayTeamId");
 
@@ -338,6 +339,33 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     awayTeamQuery,
   ]);
 
+  useEffect(() => {
+    if (isKnockout) {
+      return;
+    }
+
+    form.setValue("secondLegHomeScore", "", {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    form.setValue("secondLegAwayScore", "", {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    form.setValue("penaltyHomeScore", undefined, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    form.setValue("penaltyAwayScore", undefined, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }, [form, isKnockout]);
+
   const homeTeamSuggestions = useMemo(() => {
     const query = homeTeamQuery.trim().toLowerCase();
 
@@ -376,8 +404,8 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     <Card className="w-full max-w-lg shadow-xl">
       <CardHeader>
         <CardContent>
-          Preencha os dados da partida. Em mata-mata com ida e volta, informe os
-          placares da ida e da volta para cálculo correto do resultado.
+          Preencha os dados da partida. Em mata-mata, informe ida, volta e
+          pênaltis. Em Liga/Grupos, informe apenas o resultado.
         </CardContent>
       </CardHeader>
 
@@ -574,14 +602,15 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               )}
             />
 
-            {gameType === "KNOCKOUT" && (
+            {isKnockout ? (
               <>
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={isBusy}
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       form.setValue("secondLegHomeScore", "", {
                         shouldDirty: true,
@@ -609,6 +638,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     variant="outline"
                     size="sm"
                     disabled={isBusy}
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       form.setValue("penaltyHomeScore", undefined, {
                         shouldDirty: true,
@@ -832,6 +862,74 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                   />
                 </div>
               </>
+            ) : (
+              <div className="space-y-4">
+                <ScorePhaseCard
+                  title="Resultado"
+                  homeLabel="Casa"
+                  awayLabel="Visitante"
+                  homeField={
+                    <FormField
+                      control={form.control}
+                      name="homeScore"
+                      render={({ field }) => (
+                        <FormItem className="space-y-0">
+                          <FormControl>
+                            <ScoreStepperInput
+                              value={field.value}
+                              disabled={isBusy}
+                              name={field.name}
+                              onBlur={field.onBlur}
+                              inputRef={field.ref}
+                              variant="number"
+                              onChange={(nextValue) =>
+                                field.onChange(
+                                  typeof nextValue === "number"
+                                    ? nextValue
+                                    : nextValue === undefined
+                                      ? undefined
+                                      : Number(nextValue),
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  }
+                  awayField={
+                    <FormField
+                      control={form.control}
+                      name="awayScore"
+                      render={({ field }) => (
+                        <FormItem className="space-y-0">
+                          <FormControl>
+                            <ScoreStepperInput
+                              value={field.value}
+                              disabled={isBusy}
+                              name={field.name}
+                              onBlur={field.onBlur}
+                              inputRef={field.ref}
+                              variant="number"
+                              onChange={(nextValue) =>
+                                field.onChange(
+                                  typeof nextValue === "number"
+                                    ? nextValue
+                                    : nextValue === undefined
+                                      ? undefined
+                                      : Number(nextValue),
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  }
+                />
+              </div>
             )}
 
             <FormField
