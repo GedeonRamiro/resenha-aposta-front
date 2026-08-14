@@ -84,13 +84,11 @@ export default function RecentGames({ games }: RecentGamesProps) {
   ) => (
     <span className="inline-flex items-center gap-1 text-sm">
       <span className="inline-flex w-5 justify-center">
-        {typeof score === "number" ? score : "-"}
+        {typeof score === "number" ? score : ""}
       </span>
 
       {hasSecondLegResult ? (
-        <span className="inline-flex w-5 justify-center">
-          {secondLegScore}
-        </span>
+        <span className="inline-flex w-5 justify-center">{secondLegScore}</span>
       ) : null}
 
       {hasPenaltyResult ? (
