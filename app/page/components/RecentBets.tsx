@@ -36,7 +36,7 @@ function renderGameScore(
   return (
     <span className="inline-flex items-center gap-1 text-sm tabular-nums">
       <span className="inline-flex w-5 justify-center">
-        {typeof score === "number" ? score : "-"}
+        {typeof score === "number" ? score : ""}
       </span>
 
       {hasSecondLegResult ? (
@@ -97,14 +97,14 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                 key={bet.id}
                 className="rounded-[1.4rem] border border-primary/15 bg-background/90 p-4"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
                     <UserAvatar
                       name={bet.user.name}
                       image={bet.user.image}
                       className="h-8 w-8 shrink-0"
                     />
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium">{bet.user.name}</p>
                       <div className="mt-1 space-y-1 text-sm leading-snug text-muted-foreground">
                         <div className="flex items-center justify-between gap-2">
@@ -139,7 +139,7 @@ export default function RecentBets({ bets }: RecentBetsProps) {
                   <Badge
                     variant="outline"
                     className={cn(
-                      "rounded-full border px-3 py-1 text-[11px] font-semibold",
+                      "w-fit shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold",
                       GAME_STATUS_COLORS[bet.game.status] ?? "",
                     )}
                   >

@@ -70,11 +70,11 @@ export function UserBetsTable({ bets, userId }: UserBetsTableProps) {
                     {group.game.homeTeam}{" "}
                     {typeof group.game.homeScore === "number"
                       ? group.game.homeScore
-                      : "-"}{" "}
+                      : ""}{" "}
                     x{" "}
                     {typeof group.game.awayScore === "number"
                       ? group.game.awayScore
-                      : "-"}{" "}
+                      : ""}{" "}
                     {group.game.awayTeam}
                   </div>
                   <p className="text-xs text-muted-foreground">

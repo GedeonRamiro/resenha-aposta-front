@@ -80,7 +80,7 @@ export default function BetsList({ data }: { data: IDataBet[] }) {
                           <span className="inline-flex w-5 justify-center">
                             {typeof group.game.homeScore === "number"
                               ? group.game.homeScore
-                              : "-"}
+                              : ""}
                           </span>
 
                           {hasSecondLegResult ? (
