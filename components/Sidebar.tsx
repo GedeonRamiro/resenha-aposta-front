@@ -189,6 +189,7 @@ export function Sidebar() {
   const [rankingSubItems, setRankingSubItems] = useState<RankingSubItem[]>([
     { label: "Geral", href: "/user-scores?period=geral" },
   ]);
+
   const gameSubItems: GamesSubItem[] = [
     { label: "Todos", key: "all", href: gameQuickFilterToHref("all") },
     { label: "Hoje", key: "today", href: gameQuickFilterToHref("today") },
@@ -231,10 +232,14 @@ export function Sidebar() {
   const loadRankingSubItems = useCallback(() => {
     getConfig()
       .then((config) => {
-        const seasons = (config.rankingSeasons ?? []).map((season) => ({
-          label: season.label,
-          href: seasonToHref(season),
-        }));
+        const seasons = (config.rankingSeasons ?? [])
+          .slice()
+          .sort((a, b) => b.startDate.localeCompare(a.startDate))
+          .slice(0, 3)
+          .map((season) => ({
+            label: season.label,
+            href: seasonToHref(season),
+          }));
 
         setRankingSubItems([
           { label: "Geral", href: "/user-scores?period=geral" },
@@ -252,8 +257,26 @@ export function Sidebar() {
     loadRankingSubItems();
     window.addEventListener(APP_CONFIG_UPDATED_EVENT, loadRankingSubItems);
 
+    const refreshOnFocus = () => {
+      loadRankingSubItems();
+    };
+
+    const refreshOnVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadRankingSubItems();
+      }
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnVisibilityChange);
+
     return () => {
       window.removeEventListener(APP_CONFIG_UPDATED_EVENT, loadRankingSubItems);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener(
+        "visibilitychange",
+        refreshOnVisibilityChange,
+      );
     };
   }, [loadRankingSubItems]);
 
@@ -383,10 +406,10 @@ export function Sidebar() {
 
                     <div
                       className={cn(
-                        "ml-6 mt-2 overflow-hidden border-l border-primary/20 pl-3 transition-all duration-200",
+                        "ml-6 mt-2 border-l border-primary/20 pl-3 transition-all duration-200",
                         rankingOpen
-                          ? "max-h-40 opacity-100"
-                          : "max-h-0 opacity-0",
+                          ? "max-h-60 overflow-y-auto pr-1 opacity-100"
+                          : "max-h-0 overflow-hidden opacity-0",
                       )}
                     >
                       <div className="flex flex-col gap-1 py-1">
