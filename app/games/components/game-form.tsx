@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Check,
-  Eraser,
-  Loader2,
-  Lock,
-  LockOpen,
-  Minus,
-  Plus,
-} from "lucide-react";
+import { Check, Eraser, Loader2, Lock, LockOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
 import {
   Form,
   FormControl,
@@ -38,43 +27,11 @@ import { GAME_STATUS_COLORS } from "@/enums/status-colors";
 import { getTeamsSafe, Team } from "@/lib/teams";
 import { Competition, getCompetitionsSafe } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
+import { gameFormSchema, type GameFormValues } from "./game-form.schema";
+import { ScorePhaseCard } from "./score-fields";
+import { TeamAutocomplete } from "./team-autocomplete";
 
-const optionalScoreInput = z
-  .string()
-  .optional()
-  .refine((value) => !value?.trim() || /^\d+$/.test(value.trim()), {
-    message: "Use um número inteiro maior ou igual a zero.",
-  });
-
-const optionalNonNegativeNumber = z
-  .number({ error: "Placar deve ser um número" })
-  .min(0, "Placar não pode ser negativo")
-  .optional();
-
-const schema = z
-  .object({
-    gameDate: z.string().trim().min(1, "Data do jogo é obrigatória"),
-    gameType: z.enum(["LEAGUE_GROUP", "KNOCKOUT"]),
-    homeTeamId: z.string().trim().min(1, "Selecione o time da casa"),
-    awayTeamId: z.string().trim().min(1, "Selecione o time visitante"),
-    competitionId: z.string().trim().min(1, "Selecione a competição"),
-    moreInfo: z.string().optional(),
-    secondLegHomeScore: optionalScoreInput,
-    secondLegAwayScore: optionalScoreInput,
-
-    status: z.nativeEnum(GameStatus).optional(),
-
-    homeScore: optionalNonNegativeNumber,
-    awayScore: optionalNonNegativeNumber,
-    penaltyHomeScore: optionalNonNegativeNumber,
-    penaltyAwayScore: optionalNonNegativeNumber,
-  })
-  .refine((data) => data.homeTeamId !== data.awayTeamId, {
-    message: "Time da casa e visitante devem ser diferentes.",
-    path: ["awayTeamId"],
-  });
-
-export type GameFormValues = z.infer<typeof schema>;
+export type { GameFormValues };
 
 type GameFormProps = {
   initialData?: Partial<GameFormValues>;
@@ -82,169 +39,11 @@ type GameFormProps = {
   loading?: boolean;
 };
 
-function TeamSuggestionAvatar({ team }: { team: Team }) {
-  const initials = team.name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-
-  if (team.logoUrl) {
-    return (
-      <span
-        aria-hidden
-        className="size-6 shrink-0 rounded-full border bg-cover bg-center"
-        style={{ backgroundImage: `url(${team.logoUrl})` }}
-      />
-    );
-  }
-
-  return (
-    <span
-      aria-hidden
-      className="size-6 shrink-0 rounded-full border bg-muted text-[10px] font-semibold text-muted-foreground flex items-center justify-center"
-    >
-      {initials || "--"}
-    </span>
-  );
-}
-
-function sanitizeOptionalScoreText(value: string): string {
-  return value.replace(/\D/g, "");
-}
-
-type ScoreStepperInputProps = {
-  value: number | string | undefined;
-  disabled?: boolean;
-  name: string;
-  onBlur: () => void;
-  onChange: (value: number | string | undefined) => void;
-  inputRef: React.Ref<HTMLInputElement>;
-  variant: "number" | "text";
-};
-
-function ScoreStepperInput({
-  value,
-  disabled,
-  name,
-  onBlur,
-  onChange,
-  inputRef,
-  variant,
-}: ScoreStepperInputProps) {
-  const currentValue =
-    typeof value === "number"
-      ? String(value)
-      : typeof value === "string"
-        ? value
-        : "";
-
-  const updateValue = (nextValue: number) => {
-    if (variant === "text") {
-      onChange(String(Math.max(nextValue, 0)));
-      return;
-    }
-
-    onChange(Math.max(nextValue, 0));
-  };
-
-  const handleStep = (delta: number) => {
-    const parsedValue = Number.parseInt(currentValue, 10);
-    const safeValue =
-      Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
-    updateValue(safeValue + delta);
-  };
-
-  return (
-    <div className="inline-flex items-stretch gap-1.5">
-      <Input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        disabled={disabled}
-        value={currentValue}
-        onChange={(event) => {
-          const nextValue = sanitizeOptionalScoreText(event.target.value);
-
-          if (variant === "text") {
-            onChange(nextValue);
-            return;
-          }
-
-          onChange(nextValue === "" ? undefined : Number(nextValue));
-        }}
-        onBlur={onBlur}
-        name={name}
-        ref={inputRef}
-        className="h-11 w-12 rounded-lg px-1 text-center text-sm font-semibold tabular-nums"
-      />
-
-      <div className="flex flex-col overflow-hidden rounded-lg border border-input bg-background">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={disabled}
-          className="h-5 w-5 rounded-none border-b border-input"
-          aria-label="Aumentar placar"
-          onClick={() => handleStep(1)}
-        >
-          <Plus className="size-3.5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={disabled}
-          className="h-5 w-5 rounded-none"
-          aria-label="Diminuir placar"
-          onClick={() => handleStep(-1)}
-        >
-          <Minus className="size-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function ScorePhaseCard({
-  title,
-  homeLabel,
-  awayLabel,
-  homeField,
-  awayField,
-}: {
-  title: string;
-  homeLabel: string;
-  awayLabel: string;
-  homeField: React.ReactNode;
-  awayField: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-      <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {title}
-      </p>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="space-y-1.5 text-center">
-          <span className="text-xs font-medium text-muted-foreground">
-            {homeLabel}
-          </span>
-          <div className="flex justify-center">{homeField}</div>
-        </div>
-
-        <div className="space-y-1.5 text-center">
-          <span className="text-xs font-medium text-muted-foreground">
-            {awayLabel}
-          </span>
-          <div className="flex justify-center">{awayField}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const FIELD_UPDATE_OPTIONS = {
+  shouldDirty: true,
+  shouldTouch: true,
+  shouldValidate: true,
+} as const;
 
 function getStatusIcon(status: GameStatus) {
   switch (status) {
@@ -259,7 +58,7 @@ function getStatusIcon(status: GameStatus) {
 
 export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
   const form = useForm<GameFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(gameFormSchema),
     mode: "onTouched",
     defaultValues: {
       gameDate: initialData?.gameDate ?? "",
@@ -280,17 +79,12 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
 
   const isEditing = !!initialData;
   const isBusy = !!loading || form.formState.isSubmitting;
-  const gameType = form.watch("gameType");
-  const isKnockout = gameType === "KNOCKOUT";
+  const isKnockout = form.watch("gameType") === "KNOCKOUT";
   const selectedHomeTeamId = form.watch("homeTeamId");
   const selectedAwayTeamId = form.watch("awayTeamId");
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [homeTeamQuery, setHomeTeamQuery] = useState("");
-  const [awayTeamQuery, setAwayTeamQuery] = useState("");
-  const [isHomeSuggestionsOpen, setIsHomeSuggestionsOpen] = useState(false);
-  const [isAwaySuggestionsOpen, setIsAwaySuggestionsOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -314,91 +108,31 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!teams.length) return;
-
-    const initialHomeTeam = teams.find(
-      (team) => team.id === selectedHomeTeamId,
-    );
-    const initialAwayTeam = teams.find(
-      (team) => team.id === selectedAwayTeamId,
-    );
-
-    if (initialHomeTeam && !homeTeamQuery) {
-      setHomeTeamQuery(initialHomeTeam.name);
-    }
-
-    if (initialAwayTeam && !awayTeamQuery) {
-      setAwayTeamQuery(initialAwayTeam.name);
-    }
-  }, [
-    teams,
-    selectedHomeTeamId,
-    selectedAwayTeamId,
-    homeTeamQuery,
-    awayTeamQuery,
-  ]);
-
-  useEffect(() => {
-    if (isKnockout) {
-      return;
-    }
-
-    form.setValue("secondLegHomeScore", "", {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-    form.setValue("secondLegAwayScore", "", {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-    form.setValue("penaltyHomeScore", undefined, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-    form.setValue("penaltyAwayScore", undefined, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-  }, [form, isKnockout]);
-
-  const homeTeamSuggestions = useMemo(() => {
-    const query = homeTeamQuery.trim().toLowerCase();
-
-    return teams
-      .filter((team) => team.id !== selectedAwayTeamId)
-      .filter((team) => !query || team.name.toLowerCase().includes(query))
-      .slice(0, 8);
-  }, [teams, homeTeamQuery, selectedAwayTeamId]);
-
-  const awayTeamSuggestions = useMemo(() => {
-    const query = awayTeamQuery.trim().toLowerCase();
-
-    return teams
-      .filter((team) => team.id !== selectedHomeTeamId)
-      .filter((team) => !query || team.name.toLowerCase().includes(query))
-      .slice(0, 8);
-  }, [teams, awayTeamQuery, selectedHomeTeamId]);
-
-  function syncQueryToField(
-    nextQuery: string,
-    onChange: (value: string) => void,
-    excludedTeamId?: string,
-  ) {
-    const normalizedQuery = nextQuery.trim().toLowerCase();
-
-    const exactMatch = teams.find(
-      (team) =>
-        team.id !== excludedTeamId &&
-        team.name.trim().toLowerCase() === normalizedQuery,
-    );
-
-    onChange(exactMatch?.id ?? "");
+  function clearSecondLegScores() {
+    form.setValue("secondLegHomeScore", "", FIELD_UPDATE_OPTIONS);
+    form.setValue("secondLegAwayScore", "", FIELD_UPDATE_OPTIONS);
   }
+
+  function clearPenaltyScores() {
+    form.setValue("penaltyHomeScore", undefined, FIELD_UPDATE_OPTIONS);
+    form.setValue("penaltyAwayScore", undefined, FIELD_UPDATE_OPTIONS);
+  }
+
+  function closeGameAfter(clear: () => void) {
+    clear();
+    form.setValue("status", GameStatus.CLOSED, FIELD_UPDATE_OPTIONS);
+  }
+
+  useEffect(() => {
+    if (isKnockout) return;
+
+    clearSecondLegScores();
+    clearPenaltyScores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isKnockout]);
+
+  const submitLabel = isEditing ? "Atualizar" : "Criar";
+  const busyLabel = isEditing ? "Atualizando..." : "Criando...";
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -417,63 +151,14 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 control={form.control}
                 name="homeTeamId"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Time da casa (cadastro)
-                      <span className="text-red-500"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="Digite para buscar time"
-                          disabled={isBusy}
-                          value={homeTeamQuery}
-                          onFocus={() => setIsHomeSuggestionsOpen(true)}
-                          onBlur={() => {
-                            setTimeout(() => {
-                              setIsHomeSuggestionsOpen(false);
-                            }, 100);
-                          }}
-                          onChange={(event) => {
-                            const nextQuery = event.target.value;
-                            setHomeTeamQuery(nextQuery);
-                            syncQueryToField(
-                              nextQuery,
-                              field.onChange,
-                              selectedAwayTeamId,
-                            );
-                          }}
-                        />
-
-                        {isHomeSuggestionsOpen &&
-                          homeTeamSuggestions.length > 0 && (
-                            <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-md border bg-background shadow-lg">
-                              {homeTeamSuggestions.map((team) => (
-                                <button
-                                  key={team.id}
-                                  type="button"
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                                  onMouseDown={(event) =>
-                                    event.preventDefault()
-                                  }
-                                  onClick={() => {
-                                    setHomeTeamQuery(team.name);
-                                    field.onChange(team.id);
-                                    setIsHomeSuggestionsOpen(false);
-                                  }}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <TeamSuggestionAvatar team={team} />
-                                    <span>{team.name}</span>
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <TeamAutocomplete
+                    label="Time da casa (cadastro)"
+                    teams={teams}
+                    value={field.value}
+                    onChange={field.onChange}
+                    excludedTeamId={selectedAwayTeamId}
+                    disabled={isBusy}
+                  />
                 )}
               />
 
@@ -481,63 +166,14 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 control={form.control}
                 name="awayTeamId"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Time visitante (cadastro)
-                      <span className="text-red-500"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="Digite para buscar time"
-                          disabled={isBusy}
-                          value={awayTeamQuery}
-                          onFocus={() => setIsAwaySuggestionsOpen(true)}
-                          onBlur={() => {
-                            setTimeout(() => {
-                              setIsAwaySuggestionsOpen(false);
-                            }, 100);
-                          }}
-                          onChange={(event) => {
-                            const nextQuery = event.target.value;
-                            setAwayTeamQuery(nextQuery);
-                            syncQueryToField(
-                              nextQuery,
-                              field.onChange,
-                              selectedHomeTeamId,
-                            );
-                          }}
-                        />
-
-                        {isAwaySuggestionsOpen &&
-                          awayTeamSuggestions.length > 0 && (
-                            <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-md border bg-background shadow-lg">
-                              {awayTeamSuggestions.map((team) => (
-                                <button
-                                  key={team.id}
-                                  type="button"
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                                  onMouseDown={(event) =>
-                                    event.preventDefault()
-                                  }
-                                  onClick={() => {
-                                    setAwayTeamQuery(team.name);
-                                    field.onChange(team.id);
-                                    setIsAwaySuggestionsOpen(false);
-                                  }}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <TeamSuggestionAvatar team={team} />
-                                    <span>{team.name}</span>
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <TeamAutocomplete
+                    label="Time visitante (cadastro)"
+                    teams={teams}
+                    value={field.value}
+                    onChange={field.onChange}
+                    excludedTeamId={selectedHomeTeamId}
+                    disabled={isBusy}
+                  />
                 )}
               />
             </div>
@@ -552,9 +188,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     <span className="text-red-500"> *</span>
                   </FormLabel>
                   <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                    }}
+                    onValueChange={field.onChange}
                     value={field.value || undefined}
                     disabled={isBusy}
                   >
@@ -583,7 +217,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                 <FormItem>
                   <FormLabel>Tipo de jogo</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value)}
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                     disabled={isBusy}
                   >
@@ -611,23 +245,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     size="sm"
                     disabled={isBusy}
                     className="w-full sm:w-auto"
-                    onClick={() => {
-                      form.setValue("secondLegHomeScore", "", {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                      form.setValue("secondLegAwayScore", "", {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                      form.setValue("status", GameStatus.CLOSED, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                    }}
+                    onClick={() => closeGameAfter(clearSecondLegScores)}
                   >
                     <Eraser className="mr-2 size-4" />
                     Limpar placares da volta
@@ -639,23 +257,7 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
                     size="sm"
                     disabled={isBusy}
                     className="w-full sm:w-auto"
-                    onClick={() => {
-                      form.setValue("penaltyHomeScore", undefined, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                      form.setValue("penaltyAwayScore", undefined, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                      form.setValue("status", GameStatus.CLOSED, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-                    }}
+                    onClick={() => closeGameAfter(clearPenaltyScores)}
                   >
                     <Eraser className="mr-2 size-4" />
                     Limpar pênaltis
@@ -664,201 +266,26 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
 
                 <div className="space-y-4">
                   <ScorePhaseCard
-                    title="Placa ida"
-                    homeLabel="Casa"
-                    awayLabel="Visitante"
-                    homeField={
-                      <FormField
-                        control={form.control}
-                        name="homeScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="number"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "number"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? undefined
-                                        : Number(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
-                    awayField={
-                      <FormField
-                        control={form.control}
-                        name="awayScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="number"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "number"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? undefined
-                                        : Number(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
+                    title="Placar ida"
+                    control={form.control}
+                    homeName="homeScore"
+                    awayName="awayScore"
+                    disabled={isBusy}
                   />
-
                   <ScorePhaseCard
-                    title="Placa volta"
-                    homeLabel="Casa"
-                    awayLabel="Visitante"
-                    homeField={
-                      <FormField
-                        control={form.control}
-                        name="secondLegHomeScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="text"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "string"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? ""
-                                        : String(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
-                    awayField={
-                      <FormField
-                        control={form.control}
-                        name="secondLegAwayScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="text"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "string"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? ""
-                                        : String(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
+                    title="Placar volta"
+                    control={form.control}
+                    homeName="secondLegHomeScore"
+                    awayName="secondLegAwayScore"
+                    variant="text"
+                    disabled={isBusy}
                   />
-
                   <ScorePhaseCard
                     title="Pênaltis"
-                    homeLabel="Casa"
-                    awayLabel="Visitante"
-                    homeField={
-                      <FormField
-                        control={form.control}
-                        name="penaltyHomeScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="number"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "number"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? undefined
-                                        : Number(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
-                    awayField={
-                      <FormField
-                        control={form.control}
-                        name="penaltyAwayScore"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0">
-                            <FormControl>
-                              <ScoreStepperInput
-                                value={field.value}
-                                disabled={isBusy}
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                inputRef={field.ref}
-                                variant="number"
-                                onChange={(nextValue) =>
-                                  field.onChange(
-                                    typeof nextValue === "number"
-                                      ? nextValue
-                                      : nextValue === undefined
-                                        ? undefined
-                                        : Number(nextValue),
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    }
+                    control={form.control}
+                    homeName="penaltyHomeScore"
+                    awayName="penaltyAwayScore"
+                    disabled={isBusy}
                   />
                 </div>
               </>
@@ -866,68 +293,10 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               <div className="space-y-4">
                 <ScorePhaseCard
                   title="Resultado"
-                  homeLabel="Casa"
-                  awayLabel="Visitante"
-                  homeField={
-                    <FormField
-                      control={form.control}
-                      name="homeScore"
-                      render={({ field }) => (
-                        <FormItem className="space-y-0">
-                          <FormControl>
-                            <ScoreStepperInput
-                              value={field.value}
-                              disabled={isBusy}
-                              name={field.name}
-                              onBlur={field.onBlur}
-                              inputRef={field.ref}
-                              variant="number"
-                              onChange={(nextValue) =>
-                                field.onChange(
-                                  typeof nextValue === "number"
-                                    ? nextValue
-                                    : nextValue === undefined
-                                      ? undefined
-                                      : Number(nextValue),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  }
-                  awayField={
-                    <FormField
-                      control={form.control}
-                      name="awayScore"
-                      render={({ field }) => (
-                        <FormItem className="space-y-0">
-                          <FormControl>
-                            <ScoreStepperInput
-                              value={field.value}
-                              disabled={isBusy}
-                              name={field.name}
-                              onBlur={field.onBlur}
-                              inputRef={field.ref}
-                              variant="number"
-                              onChange={(nextValue) =>
-                                field.onChange(
-                                  typeof nextValue === "number"
-                                    ? nextValue
-                                    : nextValue === undefined
-                                      ? undefined
-                                      : Number(nextValue),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  }
+                  control={form.control}
+                  homeName="homeScore"
+                  awayName="awayScore"
+                  disabled={isBusy}
                 />
               </div>
             )}
@@ -1012,12 +381,10 @@ export function GameForm({ initialData, onSubmit, loading }: GameFormProps) {
               {isBusy ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {isEditing ? "Atualizando..." : "Criando..."}
+                  {busyLabel}
                 </>
-              ) : isEditing ? (
-                "Atualizar"
               ) : (
-                "Criar"
+                submitLabel
               )}
             </Button>
           </form>
