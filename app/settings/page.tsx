@@ -33,6 +33,28 @@ function createSeasonId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// A API guarda início/fim com horário de Brasília; a tela trabalha só com AAAA-MM-DD.
+function toDateOnly(value: string): string {
+  return value.slice(0, 10);
+}
+
+function toDateOnlySeason(season: RankingSeason): RankingSeason {
+  return {
+    ...season,
+    startDate: toDateOnly(season.startDate),
+    endDate: toDateOnly(season.endDate),
+  };
+}
+
+// Início às 00:00 e fim às 23:59:59.999 (UTC-3), para o último dia entrar por completo no filtro.
+function toSeasonStart(date: string): string {
+  return `${date}T00:00:00.000-03:00`;
+}
+
+function toSeasonEnd(date: string): string {
+  return `${date}T23:59:59.999-03:00`;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const { isAdmin, isLoading } = useBackendUser();
@@ -60,12 +82,16 @@ export default function SettingsPage() {
       .then((config) => {
         setCurrent(config.betCloseMinutesBefore);
         setInputValue(String(config.betCloseMinutesBefore));
-        const loadedSeasons = (config.rankingSeasons ?? []).map((season) => ({
-          ...season,
-          id: createSeasonId(),
-        }));
-        setSeasons(loadedSeasons);
-        setInitialSeasons(config.rankingSeasons ?? []);
+        const dateOnlySeasons = (config.rankingSeasons ?? []).map(
+          toDateOnlySeason,
+        );
+        setSeasons(
+          dateOnlySeasons.map((season) => ({
+            ...season,
+            id: createSeasonId(),
+          })),
+        );
+        setInitialSeasons(dateOnlySeasons);
       })
       .catch(() => toast.error("Erro ao carregar configurações"));
   }, [isAdmin, isLoading, router]);
@@ -147,8 +173,8 @@ export default function SettingsPage() {
       ...season,
       label: season.label.trim(),
       slug: season.slug.trim(),
-      startDate: season.startDate,
-      endDate: season.endDate,
+      startDate: toSeasonStart(season.startDate),
+      endDate: toSeasonEnd(season.endDate),
     }));
 
     try {
@@ -159,12 +185,16 @@ export default function SettingsPage() {
       });
       setCurrent(updated.betCloseMinutesBefore);
       setInputValue(String(updated.betCloseMinutesBefore));
-      const updatedSeasons = (updated.rankingSeasons ?? []).map((season) => ({
-        ...season,
-        id: createSeasonId(),
-      }));
-      setSeasons(updatedSeasons);
-      setInitialSeasons(updated.rankingSeasons ?? []);
+      const updatedSeasons = (updated.rankingSeasons ?? []).map(
+        toDateOnlySeason,
+      );
+      setSeasons(
+        updatedSeasons.map((season) => ({
+          ...season,
+          id: createSeasonId(),
+        })),
+      );
+      setInitialSeasons(updatedSeasons);
       emitAppConfigUpdated();
       toast.success("Configurações salvas!");
     } catch {
